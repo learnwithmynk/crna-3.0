@@ -22,7 +22,7 @@ export default function WelcomeScreen({ onContinue }) {
       <div className="flex-1 flex flex-col items-center justify-center px-4 py-8 text-center">
         {/* Welcome text */}
         <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-3">
-          Welcome to Your CRNA Application Companion Test
+          Welcome to Your CRNA Application Companion
         </h1>
 
         <p className="text-gray-600 mb-8 max-w-md">

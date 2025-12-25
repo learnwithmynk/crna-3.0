@@ -36,7 +36,7 @@ const WEIGHTS = {
 const SHADOW_GOAL_HOURS = 40;
 
 const READINESS_LEVELS = [
-  { min: 0, max: 39, level: 'emerging', label: 'Emerging', color: 'text-gray-600', bgColor: 'bg-gray-100', description: 'Just getting started' },
+  { min: 0, max: 39, level: 'preparing', label: 'Preparing', color: 'text-gray-600', bgColor: 'bg-gray-100', description: 'Just getting started' },
   { min: 40, max: 59, level: 'developing', label: 'Developing', color: 'text-blue-600', bgColor: 'bg-blue-100', description: 'Building momentum' },
   { min: 60, max: 79, level: 'strong', label: 'Strong', color: 'text-green-600', bgColor: 'bg-green-100', description: 'Well-prepared' },
   { min: 80, max: 100, level: 'exceptional', label: 'Exceptional', color: 'text-purple-600', bgColor: 'bg-purple-100', description: 'Outstanding preparation' },

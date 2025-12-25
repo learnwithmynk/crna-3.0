@@ -70,7 +70,7 @@ export function RegisterPage() {
     setIsSubmitting(true);
 
     const { data, error } = await signUp(email, password, {
-      name: fullName.trim(), // Changed from full_name to name to match trigger
+      full_name: fullName.trim(),
     });
 
     if (error) {
@@ -167,8 +167,9 @@ export function RegisterPage() {
                     return (
                       <div
                         key={index}
-                        className={`flex items-center gap-2 text-xs ${passed ? 'text-emerald-600' : 'text-gray-400'
-                          }`}
+                        className={`flex items-center gap-2 text-xs ${
+                          passed ? 'text-emerald-600' : 'text-gray-400'
+                        }`}
                       >
                         {passed ? (
                           <Check className="w-3.5 h-3.5" />

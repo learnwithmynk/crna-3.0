@@ -10,10 +10,6 @@ export default defineConfig({
       '@': path.resolve(__dirname, './src'),
     },
   },
-  server: {
-    host: true, // Enable network access
-    port: 5173,
-  },
   test: {
     globals: true,
     environment: 'jsdom',

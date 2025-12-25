@@ -2,7 +2,8 @@
  * My Stats Page (Optimized for Mentor Review)
  *
  * Comprehensive applicant snapshot/visual resume with:
- * - Target Programs pills at top (NEW)
+ * - Profile completion indicator (3-action threshold for 20 pts)
+ * - Target Programs pills at top
  * - Hero section with avatar + level ring
  * - Academic details (GPAs, Prerequisites, GRE, Certifications)
  * - Clinical experience (simplified)
@@ -26,6 +27,7 @@ import { ChecklistSyncDialog } from '@/components/features/programs/ChecklistSyn
 // Stats components
 import { StatsHeroSection } from '@/components/features/stats/StatsHeroSection';
 import { AcademicDetailsSection } from '@/components/features/stats/AcademicDetailsSection';
+import { PrerequisitesSubCard } from '@/components/features/stats/PrerequisitesSubCard';
 import { ClinicalExperienceSection } from '@/components/features/stats/ClinicalExperienceSection';
 import { LeadershipSection } from '@/components/features/stats/LeadershipSection';
 import { ResearchCommunitySection } from '@/components/features/stats/ResearchCommunitySection';
@@ -36,6 +38,7 @@ import { NotesSection } from '@/components/features/stats/NotesSection';
 import { ReadyScoreCompactCard } from '@/components/features/stats/ReadyScoreCompactCard';
 import { AdditionalInfoCard } from '@/components/features/stats/AdditionalInfoCard';
 import { TargetProgramsPills } from '@/components/features/stats/TargetProgramsPills';
+import { PrerequisiteQuickStartWizard } from '@/components/features/stats/PrerequisiteQuickStartWizard';
 
 // Edit sheets
 import { GpaEditSheet } from '@/components/features/stats/GpaEditSheet';
@@ -43,6 +46,12 @@ import { GreEditSheet } from '@/components/features/stats/GreEditSheet';
 import { CertificationsEditSheet } from '@/components/features/stats/CertificationsEditSheet';
 import { PrerequisitesEditSheet } from '@/components/features/stats/PrerequisitesEditSheet';
 import { ResumeBoosterEditSheet } from '@/components/features/stats/ResumeBoosterEditSheet';
+import { ClinicalExperienceEditSheet } from '@/components/features/stats/ClinicalExperienceEditSheet';
+import { ShadowExperienceEditSheet } from '@/components/features/stats/ShadowExperienceEditSheet';
+import { EventsEditSheet } from '@/components/features/stats/EventsEditSheet';
+
+// Hooks
+import { useProfileCompletion, PROFILE_ACTIONS } from '@/hooks/useProfileCompletion';
 
 // Mock data
 import {
@@ -83,10 +92,28 @@ export function MyStatsPage() {
   const [clinicalProfile, setClinicalProfile] = useState(mockClinicalProfile);
   const [resumeBoosters, setResumeBoosters] = useState(mockResumeBoosters);
   const [userNotes, setUserNotes] = useState(mockUserNotes);
+  const [shadowProfile, setShadowProfile] = useState({ totalHours: 0, totalDays: 0 });
+  const [eventsProfile, setEventsProfile] = useState({ categoriesAttended: [] });
+
+  // Prerequisite quick start wizard state
+  const [showPrereqWizard, setShowPrereqWizard] = useState(false);
 
   // Checklist sync dialog state
   const [syncDialog, setSyncDialog] = useState({ open: false, itemType: null, itemIds: [] });
   const pendingSaveRef = useRef(null);
+
+  // Profile completion tracking (uses localStorage, not props, to avoid infinite loops)
+  const {
+    completedCount,
+    requiredActions,
+    isComplete: isProfileComplete,
+    completedLabels,
+    suggestedActions,
+    shouldShowIndicator,
+    pointsReward,
+    dismissIndicator,
+    completeAction,
+  } = useProfileCompletion();
 
   // Calculate shadow stats from entries
   const shadowStats = calculateShadowStats(mockShadowDays);
@@ -136,6 +163,9 @@ export function MyStatsPage() {
       gre: 'gre',
       certifications: 'certifications',
       prerequisites: 'prerequisites',
+      clinical: 'clinical',
+      shadow: 'shadow',
+      events: 'events',
       resume_boosters: subsection || 'research',
       research: 'resume_research',
       committees: 'resume_committees',
@@ -147,6 +177,11 @@ export function MyStatsPage() {
     if (sheetType) {
       setEditSheet({ type: sheetType, open: true, subsection });
     }
+  };
+
+  // Open prerequisite quick start wizard
+  const handleOpenPrereqWizard = () => {
+    setShowPrereqWizard(true);
   };
 
   // Get checklist item IDs for a category
@@ -216,6 +251,11 @@ export function MyStatsPage() {
     const hadNoCcrn = !clinicalProfile.certifications?.includes('CCRN');
     const hasCcrnNow = data.certifications?.includes('CCRN');
 
+    // Track profile completion
+    if (data.certifications?.length > 0) {
+      completeAction(PROFILE_ACTIONS.CERTIFICATIONS);
+    }
+
     if (hadNoCcrn && hasCcrnNow && targetPrograms.length > 0) {
       // Store the save action and show sync dialog
       pendingSaveRef.current = () => {
@@ -238,11 +278,47 @@ export function MyStatsPage() {
 
   const handleSavePrerequisites = (data) => {
     setAcademicProfile((prev) => ({ ...prev, ...data }));
+    completeAction(PROFILE_ACTIONS.PREREQUISITES);
     toast.success('Prerequisites updated successfully');
+  };
+
+  // Handle quick start wizard completion
+  const handlePrereqWizardComplete = (prerequisites) => {
+    setAcademicProfile((prev) => ({
+      ...prev,
+      completedPrerequisites: [
+        ...(prev.completedPrerequisites || []),
+        ...prerequisites,
+      ],
+    }));
+    completeAction(PROFILE_ACTIONS.PREREQUISITES);
+    toast.success('Prerequisites added! You can add grades and details anytime.');
+  };
+
+  const handleSaveClinical = (data) => {
+    setClinicalProfile((prev) => ({ ...prev, ...data }));
+    completeAction(PROFILE_ACTIONS.CLINICAL);
+    toast.success('Clinical experience updated successfully');
+  };
+
+  const handleSaveShadow = (data) => {
+    setShadowProfile((prev) => ({ ...prev, ...data }));
+    completeAction(PROFILE_ACTIONS.SHADOW);
+    toast.success('Shadow experience updated successfully');
+  };
+
+  const handleSaveEvents = (data) => {
+    setEventsProfile((prev) => ({ ...prev, ...data }));
+    completeAction(PROFILE_ACTIONS.EVENTS);
+    toast.success('Events profile updated successfully');
   };
 
   const handleSaveResumeBoosters = (data) => {
     setResumeBoosters((prev) => ({ ...prev, ...data }));
+    // Track if any extracurricular was added (leadership, research, community)
+    if (data.leadership?.length > 0 || data.research?.length > 0 || data.volunteering?.length > 0) {
+      completeAction(PROFILE_ACTIONS.EXTRACURRICULARS);
+    }
     toast.success('Resume boosters updated successfully');
   };
 
@@ -266,6 +342,19 @@ export function MyStatsPage() {
     navigate(path);
   };
 
+  // Scroll to section handler for profile completion card
+  const handleScrollToSection = (sectionId) => {
+    const element = document.getElementById(sectionId);
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      // Add a brief highlight effect
+      element.classList.add('ring-2', 'ring-purple-400', 'ring-offset-2');
+      setTimeout(() => {
+        element.classList.remove('ring-2', 'ring-purple-400', 'ring-offset-2');
+      }, 2000);
+    }
+  };
+
   // Mock viewer role
   const viewerRole = 'user';
   const isOwnProfile = true;
@@ -281,9 +370,6 @@ export function MyStatsPage() {
         description="Your application snapshot and progress"
       />
 
-      {/* Target Programs Pills - At the very top */}
-      <TargetProgramsPills targetPrograms={targetPrograms} maxVisible={5} />
-
       {/* Mobile ReadyScore - Shows at top on mobile only */}
       <div className="lg:hidden mb-6">
         <ReadyScoreCompactCard
@@ -298,52 +384,80 @@ export function MyStatsPage() {
         {/* Main Content */}
         <div className="flex-1 min-w-0 space-y-6">
 
-          {/* Hero + Academic */}
+          {/* Hero with Target Programs integrated */}
           <StatsHeroSection
             user={mockUser}
             isOwnProfile={isOwnProfile}
             onEdit={handleEdit}
-          />
-          <AcademicDetailsSection
-            academicProfile={academicProfile}
-            clinicalProfile={clinicalProfile}
-            onEdit={handleEdit}
-            isEditable={isOwnProfile}
+            targetPrograms={targetPrograms}
           />
 
-          {/* Clinical + Shadow Side-by-Side */}
+          {/* Academic Details (vertical) + Prerequisites (side-by-side) */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <ClinicalExperienceSection
-              clinicalProfile={clinicalProfile}
-              clinicalEntries={mockClinicalEntries || []}
-              onViewTracker={() => handleViewTracker('clinical')}
-            />
-            <ShadowSummaryCard
-              shadowStats={shadowStats}
-              onViewTracker={() => handleViewTracker('shadow')}
-            />
+            <div id="academic-section" className="rounded-2xl transition-all duration-300">
+              <AcademicDetailsSection
+                academicProfile={academicProfile}
+                clinicalProfile={clinicalProfile}
+                onEdit={handleEdit}
+                isEditable={isOwnProfile}
+              />
+            </div>
+            <div id="prerequisites-section" className="rounded-2xl transition-all duration-300">
+              <PrerequisitesSubCard
+                academicProfile={academicProfile}
+                onEdit={handleEdit}
+                onQuickStart={() => setShowPrereqWizard(true)}
+                isEditable={isOwnProfile}
+              />
+            </div>
           </div>
 
-          {/* Events - Full width (EQ removed) */}
-          <EventsSummaryCard
-            eventStats={{
-              totalLogged: mockTrackerStats.events.totalLogged,
-              categoryBreakdown: {
-                aana_state: 1,
-                info_session: 1,
-              },
-            }}
-            eventNames={eventNames}
-            onViewTracker={() => handleViewTracker('events')}
-          />
+          {/* Clinical + Shadow + Events - 3-column layout */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div id="clinical-section" className="rounded-2xl transition-all duration-300">
+              <ClinicalExperienceSection
+                clinicalProfile={clinicalProfile}
+                clinicalEntries={mockClinicalEntries || []}
+                onViewTracker={() => handleViewTracker('clinical')}
+                onEdit={() => handleEdit('clinical')}
+                isEditable={isOwnProfile}
+              />
+            </div>
+            <div id="shadow-section" className="rounded-2xl transition-all duration-300">
+              <ShadowSummaryCard
+                shadowStats={{ ...shadowStats, ...shadowProfile }}
+                onViewTracker={() => handleViewTracker('shadow')}
+                onEdit={() => handleEdit('shadow')}
+                isEditable={isOwnProfile}
+              />
+            </div>
+            <div id="events-section" className="rounded-2xl transition-all duration-300">
+              <EventsSummaryCard
+                eventStats={{
+                  totalLogged: mockTrackerStats.events.totalLogged,
+                  categoryBreakdown: {
+                    aana_state: 1,
+                    info_session: 1,
+                  },
+                }}
+                eventNames={eventNames}
+                categoriesAttended={eventsProfile.categoriesAttended}
+                onViewTracker={() => handleViewTracker('events')}
+                onEdit={() => handleEdit('events')}
+                isEditable={isOwnProfile}
+              />
+            </div>
+          </div>
 
           {/* Leadership + Research/Community Side-by-Side */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <LeadershipSection
-              resumeBoosters={resumeBoosters}
-              onEdit={handleEdit}
-              isEditable={isOwnProfile}
-            />
+            <div id="leadership-section" className="rounded-2xl transition-all duration-300">
+              <LeadershipSection
+                resumeBoosters={resumeBoosters}
+                onEdit={handleEdit}
+                isEditable={isOwnProfile}
+              />
+            </div>
             <ResearchCommunitySection
               resumeBoosters={resumeBoosters}
               onEdit={handleEdit}
@@ -377,6 +491,7 @@ export function MyStatsPage() {
           readinessData={readinessData}
           priorityActions={priorityActions}
           onNavigate={handleNavigate}
+          user={mockUser}
           userNotes={userNotes}
           adminNotes={mockAdminNotes}
           mentorNotes={mockMentorNotes}
@@ -384,6 +499,19 @@ export function MyStatsPage() {
           currentMentorId="mentor_001"
           onSaveNote={handleSaveNote}
           isOwnProfile={isOwnProfile}
+          // Profile completion props for sidebar card
+          profileCompletion={{
+            shouldShowIndicator,
+            completedCount,
+            requiredActions,
+            isComplete: isProfileComplete,
+            pointsReward,
+            completedLabels,
+            suggestedActions,
+            onDismiss: isProfileComplete ? dismissIndicator : undefined,
+          }}
+          onScrollToSection={handleScrollToSection}
+          onEdit={handleEdit}
         />
       </div>
 
@@ -422,6 +550,35 @@ export function MyStatsPage() {
         initialValues={resumeBoosters}
         boosterType={editSheet.type?.replace('resume_', '') || 'research'}
         onSave={handleSaveResumeBoosters}
+      />
+
+      <ClinicalExperienceEditSheet
+        open={editSheet.type === 'clinical' && editSheet.open}
+        onOpenChange={(open) => setEditSheet((prev) => ({ ...prev, open }))}
+        initialValues={clinicalProfile}
+        onSave={handleSaveClinical}
+      />
+
+      <ShadowExperienceEditSheet
+        open={editSheet.type === 'shadow' && editSheet.open}
+        onOpenChange={(open) => setEditSheet((prev) => ({ ...prev, open }))}
+        initialValues={shadowProfile}
+        onSave={handleSaveShadow}
+      />
+
+      <EventsEditSheet
+        open={editSheet.type === 'events' && editSheet.open}
+        onOpenChange={(open) => setEditSheet((prev) => ({ ...prev, open }))}
+        initialValues={eventsProfile}
+        onSave={handleSaveEvents}
+      />
+
+      {/* Prerequisite Quick Start Wizard */}
+      <PrerequisiteQuickStartWizard
+        open={showPrereqWizard}
+        onOpenChange={setShowPrereqWizard}
+        existingCourses={academicProfile.completedPrerequisites || []}
+        onComplete={handlePrereqWizardComplete}
       />
 
       {/* Checklist Sync Dialog - appears when user adds GRE scores or CCRN certification */}
