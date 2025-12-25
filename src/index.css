@@ -1,0 +1,95 @@
+@import "tailwindcss";
+
+/* Custom theme configuration */
+@theme {
+  --color-primary: #F7E547;
+  --color-primary-50: #FFFEF5;
+  --color-primary-100: #FEFCE8;
+  --color-primary-200: #FEF9C3;
+  --color-primary-500: #F7E547;
+  --color-primary-600: #EAB308;
+}
+
+/* Custom base styles */
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+    --border: 214.3 31.8% 91.4%;
+    --radius: 0.5rem;
+  }
+
+  body {
+    /* Dusk gradient: amber → slate → purple (default theme) */
+    background: linear-gradient(135deg,
+      rgba(255, 251, 235, 0.4) 0%,    /* amber-50/40 */
+      rgb(241, 245, 249) 50%,          /* slate-100 */
+      rgba(250, 245, 255, 0.4) 100%    /* purple-50/40 */
+    );
+    background-attachment: fixed;
+    min-height: 100vh;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+}
+
+/* Safe area padding for mobile devices with notches */
+.safe-area-bottom {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.safe-area-top {
+  padding-top: env(safe-area-inset-top);
+}
+
+/* Yellow marker highlight effect for headings */
+.highlight-marker {
+  background: linear-gradient(180deg, transparent 50%, #F7E547 50%);
+  padding: 0 4px;
+  margin: 0 -4px;
+}
+
+/* Background gradient utility - Current (orange → pink → purple) */
+.bg-gradient-brand {
+  background: linear-gradient(to bottom right, #FFF7ED, #FDF2F8, #FAF5FF);
+}
+
+/* Confetti animation for celebrations */
+@keyframes confetti {
+  0% {
+    transform: translateY(0) rotate(0deg);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(100vh) rotate(720deg);
+    opacity: 0;
+  }
+}
+
+.animate-confetti {
+  animation: confetti 3s ease-in forwards;
+}
+
+/* Custom scrollbar styling */
+.scrollbar-thin {
+  scrollbar-width: thin;
+  scrollbar-color: #e5e7eb transparent;
+}
+
+.scrollbar-thin::-webkit-scrollbar {
+  width: 6px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background-color: #e5e7eb;
+  border-radius: 3px;
+}
+
+.scrollbar-thin:hover::-webkit-scrollbar-thumb {
+  background-color: #d1d5db;
+}

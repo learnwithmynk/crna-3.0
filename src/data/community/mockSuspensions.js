@@ -1,0 +1,201 @@
+/**
+ * Mock User Suspensions Data
+ *
+ * Sample data for testing admin suspension management functionality.
+ * Includes active, lifted, and expired suspensions.
+ */
+
+export const mockSuspensions = [
+  {
+    id: 'susp-1',
+    user_id: 'user-456',
+    user_name: 'John Troll',
+    user_email: 'john.troll@example.com',
+    user_avatar: null,
+    reason: 'Repeated harassment and disrespectful comments toward community members. User continued after warning.',
+    suspended_at: '2024-12-12T14:45:00Z',
+    suspended_until: '2025-01-11T14:45:00Z', // 30 days
+    suspended_by: 'admin-1',
+    suspended_by_name: 'Admin Sarah',
+    lifted_at: null,
+    lifted_by: null,
+    lifted_notes: null,
+    created_at: '2024-12-12T14:45:00Z',
+    status: 'active',
+  },
+  {
+    id: 'susp-2',
+    user_id: 'user-999',
+    user_name: 'Scam Account',
+    user_email: 'scammer@fake.com',
+    user_avatar: null,
+    reason: 'Attempting to scam users. Soliciting money for fake admissions help ($5000 guarantee).',
+    suspended_at: '2024-12-12T13:30:00Z',
+    suspended_until: null, // Permanent
+    suspended_by: 'admin-2',
+    suspended_by_name: 'Admin Mike',
+    lifted_at: null,
+    lifted_by: null,
+    lifted_notes: null,
+    created_at: '2024-12-12T13:30:00Z',
+    status: 'active',
+  },
+  {
+    id: 'susp-3',
+    user_id: 'user-111',
+    user_name: 'Sexist User',
+    user_email: 'sexist.user@example.com',
+    user_avatar: null,
+    reason: 'Extremely discriminatory and sexist comments. Zero tolerance policy violation.',
+    suspended_at: '2024-12-12T12:15:00Z',
+    suspended_until: '2025-03-12T12:15:00Z', // 90 days
+    suspended_by: 'admin-1',
+    suspended_by_name: 'Admin Sarah',
+    lifted_at: null,
+    lifted_by: null,
+    lifted_notes: null,
+    created_at: '2024-12-12T12:15:00Z',
+    status: 'active',
+  },
+  {
+    id: 'susp-4',
+    user_id: 'user-222',
+    user_name: 'YouTube Spammer',
+    user_email: 'youtube.spam@example.com',
+    user_avatar: null,
+    reason: 'Repeatedly posting YouTube channel links in every thread. Spam behavior after multiple warnings.',
+    suspended_at: '2024-12-12T11:45:00Z',
+    suspended_until: '2024-12-19T11:45:00Z', // 7 days
+    suspended_by: 'admin-2',
+    suspended_by_name: 'Admin Mike',
+    lifted_at: null,
+    lifted_by: null,
+    lifted_notes: null,
+    created_at: '2024-12-12T11:45:00Z',
+    status: 'active',
+  },
+  {
+    id: 'susp-5',
+    user_id: 'user-444',
+    user_name: 'Medical Troll',
+    user_email: 'medical.troll@example.com',
+    user_avatar: null,
+    reason: 'Pattern of trolling behavior. Repeatedly discouraging community members about CRNA profession.',
+    suspended_at: '2024-11-09T15:45:00Z',
+    suspended_until: '2024-12-09T15:45:00Z', // 30 days - EXPIRED
+    suspended_by: 'admin-2',
+    suspended_by_name: 'Admin Mike',
+    lifted_at: null,
+    lifted_by: null,
+    lifted_notes: null,
+    created_at: '2024-11-09T15:45:00Z',
+    status: 'expired',
+  },
+  {
+    id: 'susp-6',
+    user_id: 'user-777',
+    user_name: 'Angry Applicant',
+    user_email: 'angry.applicant@example.com',
+    user_avatar: null,
+    reason: 'Verbally attacking other members who offered constructive feedback on application essay.',
+    suspended_at: '2024-12-08T10:00:00Z',
+    suspended_until: '2024-12-15T10:00:00Z', // 7 days
+    suspended_by: 'admin-1',
+    suspended_by_name: 'Admin Sarah',
+    lifted_at: '2024-12-10T14:30:00Z',
+    lifted_by: 'admin-1',
+    lifted_by_name: 'Admin Sarah',
+    lifted_notes: 'User apologized and showed genuine remorse. Agreed to community guidelines.',
+    created_at: '2024-12-08T10:00:00Z',
+    status: 'lifted',
+  },
+  {
+    id: 'susp-7',
+    user_id: 'user-888',
+    user_name: 'Product Spammer',
+    user_email: 'product.spam@example.com',
+    user_avatar: null,
+    reason: 'Posting affiliate links and promoting third-party products without disclosure.',
+    suspended_at: '2024-12-05T09:30:00Z',
+    suspended_until: '2024-12-12T09:30:00Z', // 7 days - EXPIRED
+    suspended_by: 'admin-2',
+    suspended_by_name: 'Admin Mike',
+    lifted_at: null,
+    lifted_by: null,
+    lifted_notes: null,
+    created_at: '2024-12-05T09:30:00Z',
+    status: 'expired',
+  },
+  {
+    id: 'susp-8',
+    user_id: 'user-666',
+    user_name: 'Debate Troll',
+    user_email: 'debate.troll@example.com',
+    user_avatar: null,
+    reason: 'Deliberately starting arguments and derailing helpful discussions. Multiple topic locks required.',
+    suspended_at: '2024-11-28T16:00:00Z',
+    suspended_until: '2024-12-12T16:00:00Z', // 14 days - EXPIRED
+    suspended_by: 'admin-1',
+    suspended_by_name: 'Admin Sarah',
+    lifted_at: null,
+    lifted_by: null,
+    lifted_notes: null,
+    created_at: '2024-11-28T16:00:00Z',
+    status: 'expired',
+  },
+  {
+    id: 'susp-9',
+    user_id: 'user-555',
+    user_name: 'Oversharer',
+    user_email: 'overshare@example.com',
+    user_avatar: null,
+    reason: 'Posting personal contact information and trying to take conversations off-platform for sales.',
+    suspended_at: '2024-12-03T11:00:00Z',
+    suspended_until: '2024-12-06T11:00:00Z', // 3 days
+    suspended_by: 'admin-2',
+    suspended_by_name: 'Admin Mike',
+    lifted_at: '2024-12-04T08:00:00Z',
+    lifted_by: 'admin-2',
+    lifted_by_name: 'Admin Mike',
+    lifted_notes: 'User reached out and understood the privacy/safety concerns. First offense, willing to give second chance.',
+    created_at: '2024-12-03T11:00:00Z',
+    status: 'lifted',
+  },
+  {
+    id: 'susp-10',
+    user_id: 'user-333',
+    user_name: 'Hot Take User',
+    user_email: 'hottake@example.com',
+    user_avatar: null,
+    reason: 'Inflammatory political comments unrelated to CRNA education. Creating hostile environment.',
+    suspended_at: '2024-12-01T14:20:00Z',
+    suspended_until: '2024-12-04T14:20:00Z', // 3 days - EXPIRED
+    suspended_by: 'admin-1',
+    suspended_by_name: 'Admin Sarah',
+    lifted_at: null,
+    lifted_by: null,
+    lifted_notes: null,
+    created_at: '2024-12-01T14:20:00Z',
+    status: 'expired',
+  },
+];
+
+// Suspension status constants
+export const SUSPENSION_STATUS = {
+  ACTIVE: 'active',
+  LIFTED: 'lifted',
+  EXPIRED: 'expired',
+};
+
+// Duration options (in days, 0 = permanent)
+export const SUSPENSION_DURATIONS = [
+  { label: '1 day', value: 1 },
+  { label: '3 days', value: 3 },
+  { label: '7 days', value: 7 },
+  { label: '14 days', value: 14 },
+  { label: '30 days', value: 30 },
+  { label: '90 days', value: 90 },
+  { label: 'Permanent', value: 0 },
+];
+
+export default mockSuspensions;

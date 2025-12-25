@@ -1,0 +1,1352 @@
+# CRNA Club - Complete Application Documentation
+
+**Version:** 1.0  
+**Last Updated:** December 24, 2025  
+**Total Files:** 676  
+**Database Tables:** 80+  
+**Routes:** 100+
+
+---
+
+## 📚 Table of Contents
+
+1. [Application Overview](#application-overview)
+2. [Architecture](#architecture)
+3. [User Roles & Access Control](#user-roles--access-control)
+4. [User Flows](#user-flows)
+5. [Database Architecture](#database-architecture)
+6. [Features Deep Dive](#features-deep-dive)
+7. [State Management](#state-management)
+8. [API Integration](#api-integration)
+9. [File Structure](#file-structure)
+
+---
+
+## 🎯 Application Overview
+
+### What is CRNA Club?
+
+The CRNA Club is a comprehensive platform for aspiring Certified Registered Nurse Anesthetists (CRNAs) to:
+- Research and track CRNA school applications
+- Manage application requirements and deadlines
+- Track clinical experience, shadowing, and professional development
+- Connect with mentors and the CRNA community
+- Access learning resources and prerequisite courses
+- Participate in forums and discussions
+
+### Technology Stack
+
+**Frontend:**
+- React 18 with Vite
+- React Router v6 (client-side routing)
+- TailwindCSS for styling
+- Lucide React for icons
+- Sonner for toast notifications
+
+**Backend:**
+- Supabase (PostgreSQL database)
+- Supabase Auth (authentication)
+- Supabase Storage (file uploads)
+- Supabase Realtime (live updates)
+
+**State Management:**
+- React Context API (`useAuth`, `usePrograms`, etc.)
+- localStorage for offline/demo mode
+- Supabase for authenticated users
+
+---
+
+## 🏗️ Architecture
+
+### High-Level Architecture
+
+```mermaid
+graph TB
+    A[User Browser] --> B[React App]
+    B --> C[React Router]
+    C --> D[Protected Routes]
+    D --> E[Page Components]
+    E --> F[Custom Hooks]
+    F --> G{Auth Status}
+    G -->|Authenticated| H[Supabase API]
+    G -->|Unauthenticated| I[localStorage]
+    H --> J[(PostgreSQL Database)]
+    H --> K[Supabase Storage]
+    H --> L[Supabase Auth]
+```
+
+### Project Structure
+
+```
+src/
+├── components/        # 433 files - Reusable UI components
+│   ├── layout/       # App layout, navigation, sidebar
+│   ├── ui/           # Base UI components (buttons, cards, etc.)
+│   ├── features/     # Feature-specific components
+│   └── auth/         # Authentication components
+├── pages/            # 88 files - Page components
+│   ├── applicant/    # Student-facing pages
+│   ├── srna/         # Provider/mentor pages
+│   ├── admin/        # Admin dashboard pages
+│   └── shared/       # Shared pages (login, legal, etc.)
+├── hooks/            # 57 files - Custom React hooks
+├── data/             # 45 files - Mock data & configurations
+├── lib/              # 47 files - Utility functions
+├── contexts/         # React contexts
+├── config/           # App configuration
+└── types/            # TypeScript type definitions
+```
+
+### Routing Architecture
+
+**Total Routes:** 100+
+
+**Route Categories:**
+1. **Auth Routes** (2): `/login`, `/register`
+2. **Applicant Routes** (30+): Dashboard, programs, trackers, etc.
+3. **Provider Routes** (12): Mentor dashboard, bookings, earnings
+4. **Admin Routes** (20+): Content management, user management
+5. **Community Routes** (10+): Forums, messages, groups
+6. **Marketplace Routes** (15+): Mentors, bookings, services
+7. **Learning Routes** (8): Modules, lessons, downloads
+8. **Legal/Info Routes** (7): Terms, privacy, accessibility
+
+**Route Protection:**
+- `ProtectedRoute`: Requires authentication
+- `AdminRoute`: Requires admin role
+- `ProviderRoute`: Requires approved provider status
+
+---
+
+## 👥 User Roles & Access Control
+
+### Role Hierarchy
+
+```mermaid
+graph TD
+    A[User Roles] --> B[user - Default]
+    A --> C[provider - Approved Mentors]
+    A --> D[admin - Platform Administrators]
+    
+    B --> E[Can: Browse, Save Programs, Track Progress]
+    C --> F[Can: Everything in 'user' + Offer Services]
+    D --> G[Can: Everything + Manage Platform]
+```
+
+### Role Definitions
+
+#### 1. **User** (Default Role)
+**Stored in:** `user_profiles.role = 'user'`
+
+**Permissions:**
+- ✅ Browse school database
+- ✅ Save and target programs
+- ✅ Track application progress
+- ✅ Use trackers (clinical, shadowing, EQ)
+- ✅ Access learning library
+- ✅ Participate in forums
+- ✅ Book mentor sessions
+- ❌ Cannot offer mentor services
+- ❌ Cannot access admin panel
+
+#### 2. **Provider** (Approved Mentors)
+**Stored in:** `user_profiles.role = 'provider'`
+
+**Requirements:**
+- Must apply via `/marketplace/provider/apply`
+- Admin approval required
+- Complete onboarding process
+
+**Additional Permissions:**
+- ✅ All 'user' permissions
+- ✅ Create and manage services
+- ✅ Set availability
+- ✅ Accept booking requests
+- ✅ Earn from sessions
+- ✅ Access provider dashboard
+- ❌ Cannot access admin panel
+
+#### 3. **Admin**
+**Stored in:** `user_profiles.role = 'admin'`
+
+**Full Access:**
+- ✅ All platform features
+- ✅ User management
+- ✅ Content management (modules, lessons)
+- ✅ Provider approval/rejection
+- ✅ Community moderation
+- ✅ Access control settings
+- ✅ Analytics and reports
+
+### Entitlements System
+
+**Table:** `user_entitlements`
+
+Entitlements grant access to specific features beyond role-based access:
+
+**Common Entitlements:**
+- `active_membership` - Full platform access
+- `premium_content` - Access to premium learning modules
+- `marketplace_access` - Can book mentors
+- `community_access` - Can post in forums
+
+**How It Works:**
+```javascript
+// Check if user has entitlement
+const hasAccess = user.entitlements.includes('premium_content');
+
+// Entitlements are fetched via RPC function
+const { data } = await supabase.rpc('get_user_entitlements', {
+  p_user_id: user.id
+});
+```
+
+---
+
+## 🔄 User Flows
+
+### 1. Registration Flow
+
+```mermaid
+sequenceDiagram
+    participant U as User
+    participant R as RegisterPage
+    participant A as useAuth Hook
+    participant S as Supabase
+    participant D as Database
+    
+    U->>R: Fill registration form
+    U->>R: Click "Create Account"
+    R->>A: signUp(email, password, metadata)
+    A->>S: auth.signUp()
+    S->>D: Create user in auth.users
+    S-->>A: Return user data
+    A->>D: Create user_profiles record
+    A->>D: Create user_guidance_state
+    A->>D: Create user_academic_profiles
+    A->>D: Create user_clinical_profiles
+    A->>D: Create user_points
+    D-->>A: Records created
+    A->>A: enrichUserData()
+    A-->>R: Success
+    R->>U: Redirect to dashboard
+```
+
+**Files Involved:**
+- [`src/pages/shared/RegisterPage.jsx`](file:///c:/Users/Admin/Desktop/HACKFEST%20AI%20TEAM/crna-club-rebuild-main/src/pages/shared/RegisterPage.jsx)
+- [`src/hooks/useAuth.jsx`](file:///c:/Users/Admin/Desktop/HACKFEST%20AI%20TEAM/crna-club-rebuild-main/src/hooks/useAuth.jsx)
+
+**Database Tables Created:**
+1. `auth.users` - Authentication record
+2. `user_profiles` - User profile and role
+3. `user_guidance_state` - Onboarding progress
+4. `user_academic_profiles` - Academic information
+5. `user_clinical_profiles` - Clinical experience
+6. `user_points` - Gamification points
+
+**Key Code:**
+```javascript
+// RegisterPage.jsx - Line 73
+const { data, error } = await signUp(email, password, {
+  name: fullName.trim(),
+});
+
+// useAuth.jsx - Lines 260-290
+// Manual profile creation after signup
+await supabase.from('user_profiles').insert({
+  id: data.user.id,
+  email: data.user.email,
+  name: metadata.name || data.user.email,
+  created_at: new Date().toISOString()
+});
+```
+
+---
+
+### 2. Login Flow
+
+```mermaid
+sequenceDiagram
+    participant U as User
+    participant L as LoginPage
+    participant A as useAuth Hook
+    participant S as Supabase
+    participant D as Database
+    
+    U->>L: Enter credentials
+    U->>L: Click "Sign In"
+    L->>A: signIn(email, password)
+    A->>S: auth.signInWithPassword()
+    S-->>A: Return session + user
+    A->>A: enrichUserData(user)
+    A->>D: Fetch user_profiles
+    A->>D: Call get_user_entitlements()
+    D-->>A: Return role + entitlements
+    A->>A: setUser(enrichedUser)
+    A-->>L: Success
+    L->>U: Redirect to dashboard
+```
+
+**Authentication State:**
+```javascript
+// Stored in useAuth context
+{
+  user: {
+    id: "uuid",
+    email: "user@example.com",
+    user_metadata: { name: "John Doe" },
+    role: "user",  // From user_profiles
+    entitlements: ["active_membership"]  // From user_entitlements
+  },
+  session: { /* Supabase session */ },
+  isLoading: false
+}
+```
+
+---
+
+### 3. Program Management Flow
+
+```mermaid
+graph TD
+    A[Browse Schools] --> B{Find School}
+    B --> C[View School Profile]
+    C --> D{Save School?}
+    D -->|Yes| E[Add to Saved Programs]
+    E --> F{Convert to Target?}
+    F -->|Yes| G[Convert to Target Program]
+    G --> H[Initialize Checklist]
+    H --> I[Track Application Progress]
+    I --> J[Update Status]
+    J --> K[Submit Application]
+    K --> L[Mark as Submitted]
+```
+
+**Data Flow:**
+
+**1. Browse Schools**
+- **Source:** `src/data/supabase/schools.js` (static data)
+- **Component:** `SchoolDatabasePage.jsx`
+- **Hook:** `useSchools.js`
+
+**2. Save School**
+```javascript
+// usePrograms.js - saveSchool()
+if (user) {
+  // Supabase: Insert into user_saved_schools
+  await supabase.from('user_saved_schools').upsert({
+    user_id: user.id,
+    school_id: schoolId,
+    is_target: false
+  });
+} else {
+  // localStorage fallback
+  setSavedSchoolIds(prev => [...prev, schoolId]);
+}
+```
+
+**3. Convert to Target**
+```javascript
+// usePrograms.js - convertToTarget()
+await supabase.from('user_saved_schools').upsert({
+  user_id: user.id,
+  school_id: schoolId,
+  is_target: true,
+  status: 'researching'
+});
+
+// Create default checklist
+const checklistItems = DEFAULT_CHECKLIST_ITEMS.map(item => ({
+  saved_school_id: savedSchool.id,
+  user_id: user.id,
+  label: item.label,
+  completed: false
+}));
+
+await supabase.from('target_program_checklists').insert(checklistItems);
+```
+
+**Database Tables:**
+- `user_saved_schools` - Saved/target programs
+- `target_program_checklists` - Application checklists
+- `target_program_lors` - Letter of recommendation tracking
+- `target_program_documents` - Uploaded documents
+
+---
+
+### 4. Dashboard Experience
+
+**Page:** `DashboardPage.jsx`
+
+**Data Sources:**
+
+1. **User Info**
+   - Source: `useAuth()` hook
+   - Displays: Dynamic greeting, user name
+
+2. **Target Programs**
+   - Source: `usePrograms()` hook
+   - Query: `user_saved_schools` where `is_target = true`
+   - Displays: Program cards with progress
+
+3. **Tasks/To-Do List**
+   - Source: Generated from target programs
+   - Logic: `generateTasksForProgram()` in `usePrograms.js`
+   - Displays: Upcoming deadlines, action items
+
+4. **Milestones**
+   - Source: `mockMilestones` (static for now)
+   - Displays: Application progress milestones
+
+5. **Calendar Widget**
+   - Source: Target program deadlines
+   - Displays: Upcoming deadlines
+
+6. **Progress Tracker**
+   - Source: `mockTrackerStats` + `user_points`
+   - Displays: Points, level, streaks
+
+**Key Features:**
+- Dynamic greeting based on time of day
+- Personalized content based on user's programs
+- Smart prompts/nudges for next actions
+- Gamification elements (points, levels)
+
+---
+
+## 🗄️ Database Architecture
+
+### Database Overview
+
+**Total Tables:** 80+  
+**Total Migrations:** 40 files  
+**Database:** PostgreSQL (via Supabase)
+
+### Core Tables
+
+#### 1. User Management
+
+**`user_profiles`**
+```sql
+CREATE TABLE user_profiles (
+  id UUID PRIMARY KEY REFERENCES auth.users(id),
+  email TEXT NOT NULL,
+  name TEXT,
+  role TEXT DEFAULT 'user',  -- 'user', 'provider', 'admin'
+  avatar_url TEXT,
+  bio TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+```
+
+**`user_entitlements`**
+```sql
+CREATE TABLE user_entitlements (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id UUID REFERENCES user_profiles(id),
+  entitlement_slug TEXT NOT NULL,
+  granted_at TIMESTAMPTZ DEFAULT NOW(),
+  expires_at TIMESTAMPTZ,
+  is_active BOOLEAN DEFAULT true
+);
+```
+
+**`user_academic_profiles`**
+- Stores GPA, degree information
+- Prerequisites completed
+- Academic achievements
+
+**`user_clinical_profiles`**
+- Clinical experience
+- Certifications (CCRN, ACLS, etc.)
+- Specialties
+
+**`user_guidance_state`**
+- Onboarding progress
+- Feature tour completion
+- User preferences
+
+**`user_points`**
+- Gamification points
+- Current level
+- Experience tracking
+
+---
+
+#### 2. School & Program Management
+
+**`schools`** (Static data - 530KB seed file)
+```sql
+CREATE TABLE schools (
+  id SERIAL PRIMARY KEY,
+  name TEXT NOT NULL,
+  city TEXT,
+  state TEXT,
+  program_type TEXT,  -- 'DNP', 'DNAP', 'MSN', etc.
+  degree TEXT,
+  application_deadline DATE,
+  minimum_gpa DECIMAL,
+  gre_required BOOLEAN,
+  ccrn_required BOOLEAN,
+  shadowing_required BOOLEAN,
+  website_url TEXT,
+  image_url TEXT
+);
+```
+
+**`user_saved_schools`**
+```sql
+CREATE TABLE user_saved_schools (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id UUID REFERENCES user_profiles(id),
+  school_id INTEGER REFERENCES schools(id),
+  is_target BOOLEAN DEFAULT false,
+  status TEXT,  -- 'researching', 'applying', 'submitted', 'accepted', 'rejected'
+  progress INTEGER DEFAULT 0,
+  notes TEXT,
+  saved_at TIMESTAMPTZ DEFAULT NOW()
+);
+```
+
+**`target_program_checklists`**
+```sql
+CREATE TABLE target_program_checklists (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  saved_school_id UUID REFERENCES user_saved_schools(id),
+  user_id UUID REFERENCES user_profiles(id),
+  label TEXT NOT NULL,
+  completed BOOLEAN DEFAULT false,
+  is_default BOOLEAN DEFAULT true,
+  sort_order INTEGER,
+  completed_at TIMESTAMPTZ
+);
+```
+
+**`target_program_lors`** - Letter of recommendation tracking  
+**`target_program_documents`** - Uploaded application documents
+
+---
+
+#### 3. Tracker System
+
+**`clinical_entries`**
+- Daily clinical experience logs
+- Patient encounters
+- Procedures performed
+- Points earned
+
+**`clinical_tracker_stats`**
+- Aggregated statistics
+- Streaks
+- Total hours/encounters
+
+**`shadow_days`**
+- CRNA shadowing experiences
+- Facility information
+- Reflections
+
+**`crna_network`**
+- CRNA contacts made during shadowing
+- Networking opportunities
+
+**`eq_reflections`**
+- Emotional intelligence journal entries
+- Self-reflection prompts
+- Growth tracking
+
+**`user_events`**
+- Attended events (conferences, webinars)
+- Event notes and takeaways
+
+---
+
+#### 4. Community Features
+
+**`forums`**
+```sql
+CREATE TABLE forums (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  name TEXT NOT NULL,
+  description TEXT,
+  icon TEXT,
+  sort_order INTEGER,
+  is_active BOOLEAN DEFAULT true
+);
+```
+
+**`topics`**
+```sql
+CREATE TABLE topics (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  forum_id UUID REFERENCES forums(id),
+  author_id UUID REFERENCES user_profiles(id),
+  title TEXT NOT NULL,
+  content TEXT NOT NULL,
+  is_pinned BOOLEAN DEFAULT false,
+  is_locked BOOLEAN DEFAULT false,
+  view_count INTEGER DEFAULT 0,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+```
+
+**`replies`** - Forum topic replies  
+**`topic_reactions`** - Likes, helpful, etc.  
+**`community_reports`** - User-reported content  
+**`user_suspensions`** - Moderation actions  
+**`community_notifications`** - Forum activity notifications
+
+---
+
+#### 5. Marketplace (Mentorship)
+
+**`provider_profiles`**
+```sql
+CREATE TABLE provider_profiles (
+  id UUID PRIMARY KEY REFERENCES user_profiles(id),
+  status TEXT,  -- 'pending', 'approved', 'rejected', 'suspended'
+  bio TEXT,
+  specialties TEXT[],
+  years_experience INTEGER,
+  hourly_rate DECIMAL,
+  cal_com_username TEXT,
+  stripe_account_id TEXT,
+  approval_date TIMESTAMPTZ
+);
+```
+
+**`services`**
+- Mentor service offerings
+- Pricing, duration
+- Service descriptions
+
+**`bookings`**
+```sql
+CREATE TABLE bookings (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  service_id UUID REFERENCES services(id),
+  student_id UUID REFERENCES user_profiles(id),
+  provider_id UUID REFERENCES provider_profiles(id),
+  status TEXT,  -- 'pending', 'confirmed', 'completed', 'cancelled'
+  scheduled_at TIMESTAMPTZ,
+  duration_minutes INTEGER,
+  total_price DECIMAL,
+  cal_com_event_id TEXT,
+  zoom_link TEXT
+);
+```
+
+**`reviews`** - Student reviews of mentors  
+**`provider_earnings`** - Payment tracking  
+**`booking_messages`** - Pre-session communication
+
+---
+
+#### 6. Learning Management System (LMS)
+
+**`modules`**
+```sql
+CREATE TABLE modules (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  title TEXT NOT NULL,
+  slug TEXT UNIQUE NOT NULL,
+  description TEXT,
+  category_id UUID REFERENCES categories(id),
+  sort_order INTEGER,
+  is_published BOOLEAN DEFAULT false,
+  required_entitlement TEXT
+);
+```
+
+**`lessons`**
+```sql
+CREATE TABLE lessons (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  module_id UUID REFERENCES modules(id),
+  title TEXT NOT NULL,
+  slug TEXT NOT NULL,
+  content TEXT,  -- Rich text/HTML
+  video_url TEXT,
+  duration_minutes INTEGER,
+  sort_order INTEGER,
+  required_entitlement TEXT
+);
+```
+
+**`lesson_progress`**
+- User progress through lessons
+- Completion tracking
+- Time spent
+
+**`downloads`**
+- Downloadable resources
+- PDFs, templates, guides
+- Access control
+
+---
+
+#### 7. Gamification
+
+**`badges`**
+```sql
+CREATE TABLE badges (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  name TEXT NOT NULL,
+  description TEXT,
+  icon TEXT,
+  category TEXT,
+  points_required INTEGER,
+  rarity TEXT  -- 'common', 'rare', 'epic', 'legendary'
+);
+```
+
+**`user_badges`** - Earned badges  
+**`level_thresholds`** - Points required for each level  
+**`point_actions`** - Actions that award points
+
+---
+
+### Database Relationships
+
+```mermaid
+erDiagram
+    USER_PROFILES ||--o{ USER_SAVED_SCHOOLS : saves
+    USER_PROFILES ||--o{ CLINICAL_ENTRIES : logs
+    USER_PROFILES ||--o{ TOPICS : creates
+    USER_PROFILES ||--o{ BOOKINGS : books
+    USER_PROFILES ||--o{ USER_BADGES : earns
+    
+    SCHOOLS ||--o{ USER_SAVED_SCHOOLS : referenced_by
+    USER_SAVED_SCHOOLS ||--o{ TARGET_PROGRAM_CHECKLISTS : has
+    USER_SAVED_SCHOOLS ||--o{ TARGET_PROGRAM_LORS : tracks
+    
+    FORUMS ||--o{ TOPICS : contains
+    TOPICS ||--o{ REPLIES : has
+    
+    PROVIDER_PROFILES ||--o{ SERVICES : offers
+    SERVICES ||--o{ BOOKINGS : booked_for
+    
+    MODULES ||--o{ LESSONS : contains
+    LESSONS ||--o{ LESSON_PROGRESS : tracked_in
+```
+
+---
+
+## 🎨 Features Deep Dive
+
+### Feature 1: Program Management
+
+**Hook:** `usePrograms.js` (1395 lines)
+
+**Key Functions:**
+
+1. **`saveSchool(schoolId)`**
+   - Adds school to saved list
+   - Supabase: Inserts into `user_saved_schools`
+   - localStorage fallback for unauthenticated users
+
+2. **`convertToTarget(programId)`**
+   - Converts saved school to target program
+   - Creates default checklist (8 items)
+   - Initializes tracking data
+
+3. **`updateTargetData(programId, updates)`**
+   - Updates program status, notes, progress
+   - Syncs to Supabase
+
+4. **`toggleChecklistItem(programId, itemId)`**
+   - Marks checklist item complete/incomplete
+   - Recalculates progress percentage
+   - Awards points (future feature)
+
+**Default Checklist Items:**
+1. Research program requirements
+2. Request transcripts
+3. Prepare personal statement
+4. Request letters of recommendation
+5. Schedule GRE (if required)
+6. Take GRE (if required)
+7. Obtain CCRN certification (if required)
+8. Submit application
+
+**Data Storage:**
+
+**Authenticated Users:**
+```javascript
+// Stored in Supabase
+user_saved_schools {
+  user_id, school_id, is_target, status, progress, notes
+}
+
+target_program_checklists {
+  saved_school_id, label, completed, sort_order
+}
+```
+
+**Unauthenticated Users:**
+```javascript
+// Stored in localStorage
+localStorage.setItem('crna_saved_schools', JSON.stringify([1, 5, 12]));
+localStorage.setItem('crna_target_schools', JSON.stringify([5, 12]));
+localStorage.setItem('crna_target_schools_data', JSON.stringify({
+  '5': {
+    status: 'applying',
+    progress: 60,
+    checklist: [...]
+  }
+}));
+```
+
+---
+
+### Feature 2: Clinical Tracker
+
+**Hook:** `useTrackers.js`  
+**Page:** `MyTrackersPage.jsx`
+
+**Purpose:** Track clinical experience hours, procedures, and patient encounters
+
+**Data Model:**
+
+```javascript
+// clinical_entries table
+{
+  id: uuid,
+  user_id: uuid,
+  date: date,
+  shift_start: time,
+  shift_end: time,
+  facility: text,
+  unit: text,
+  patient_encounters: integer,
+  procedures: text[],  // ['IV Start', 'Foley Catheter', ...]
+  notes: text,
+  points_earned: integer
+}
+```
+
+**Features:**
+- ✅ Log daily shifts
+- ✅ Track patient encounters
+- ✅ Record procedures performed
+- ✅ Calculate total hours
+- ✅ Streak tracking (consecutive days)
+- ✅ Points for consistency
+
+**Statistics Tracked:**
+- Total clinical hours
+- Total patient encounters
+- Procedures by category
+- Current streak
+- Longest streak
+- Points earned
+
+---
+
+### Feature 3: Shadowing Tracker
+
+**Purpose:** Track CRNA shadowing experiences
+
+**Data Model:**
+
+```javascript
+// shadow_days table
+{
+  id: uuid,
+  user_id: uuid,
+  date: date,
+  facility: text,
+  crna_name: text,
+  specialty: text,
+  hours: decimal,
+  cases_observed: integer,
+  key_learnings: text,
+  reflection: text
+}
+
+// crna_network table
+{
+  id: uuid,
+  user_id: uuid,
+  shadow_day_id: uuid,
+  crna_name: text,
+  email: text,
+  phone: text,
+  facility: text,
+  notes: text
+}
+```
+
+**Features:**
+- ✅ Log shadowing days
+- ✅ Track CRNA contacts
+- ✅ Record key learnings
+- ✅ Build professional network
+- ✅ Export contact list
+
+---
+
+### Feature 4: Marketplace (Mentorship)
+
+**Purpose:** Connect students with CRNA mentors for paid 1-on-1 sessions
+
+**User Journey:**
+
+**For Students:**
+1. Browse mentor profiles (`/marketplace`)
+2. View mentor details, reviews, availability
+3. Book a session (`/marketplace/book/:serviceId`)
+4. Pay via Stripe
+5. Receive Zoom link
+6. Attend session
+7. Leave review
+
+**For Providers:**
+1. Apply to become mentor (`/marketplace/provider/apply`)
+2. Admin reviews application
+3. Complete onboarding (`/marketplace/provider/onboarding`)
+4. Connect Cal.com + Stripe
+5. Create services
+6. Set availability
+7. Accept booking requests
+8. Conduct sessions
+9. Receive payments
+
+**Integration:**
+- **Cal.com:** Availability and scheduling
+- **Stripe:** Payment processing
+- **Zoom:** Video sessions (via Cal.com)
+
+**Database Flow:**
+
+```javascript
+// Provider applies
+provider_applications {
+  user_id, bio, experience, specialties, status: 'pending'
+}
+
+// Admin approves
+UPDATE user_profiles SET role = 'provider'
+INSERT INTO provider_profiles
+
+// Provider creates service
+services {
+  provider_id, title, description, price, duration
+}
+
+// Student books
+bookings {
+  service_id, student_id, provider_id,
+  status: 'pending', scheduled_at, total_price
+}
+
+// After session
+reviews {
+  booking_id, rating, comment
+}
+
+provider_earnings {
+  provider_id, booking_id, amount, status: 'pending'
+}
+```
+
+---
+
+### Feature 5: Community Forums
+
+**Purpose:** Discussion forums for CRNA applicants
+
+**Structure:**
+
+```
+Forums (Categories)
+└── Topics (Threads)
+    └── Replies (Comments)
+        └── Reactions (Likes, Helpful, etc.)
+```
+
+**Features:**
+- ✅ Create topics
+- ✅ Reply to topics
+- ✅ React to posts (👍 helpful, ❤️ like)
+- ✅ Pin important topics
+- ✅ Lock topics (admin)
+- ✅ Report inappropriate content
+- ✅ User blocking
+- ✅ Profanity filter
+- ✅ Spam detection
+
+**Moderation:**
+- Automatic profanity filtering
+- User reporting system
+- Admin review queue
+- User suspension system
+- Content archival
+
+**Notifications:**
+- New replies to subscribed topics
+- Mentions (@username)
+- Reactions to your posts
+
+---
+
+### Feature 6: Learning Library
+
+**Purpose:** Educational modules and lessons for CRNA preparation
+
+**Structure:**
+
+```
+Categories
+└── Modules
+    └── Lessons
+        ├── Video content
+        ├── Text content
+        └── Downloads
+```
+
+**Access Control:**
+
+```javascript
+// Lesson access check
+const hasAccess = (lesson, user) => {
+  if (!lesson.required_entitlement) return true;
+  return user.entitlements.includes(lesson.required_entitlement);
+};
+```
+
+**Progress Tracking:**
+
+```javascript
+// lesson_progress table
+{
+  user_id, lesson_id,
+  status: 'not_started' | 'in_progress' | 'completed',
+  progress_percent: 0-100,
+  time_spent_seconds: integer,
+  completed_at: timestamp
+}
+```
+
+**Features:**
+- ✅ Video lessons
+- ✅ Rich text content
+- ✅ Downloadable resources
+- ✅ Progress tracking
+- ✅ Completion certificates (future)
+- ✅ Quizzes (future)
+
+---
+
+### Feature 7: Gamification
+
+**Purpose:** Engage users through points, levels, and badges
+
+**Point System:**
+
+**Actions that Award Points:**
+- Log clinical entry: 10 points
+- Complete checklist item: 25 points
+- Submit application: 100 points
+- Post in forum: 5 points
+- Complete lesson: 20 points
+- Maintain 7-day streak: 50 points bonus
+
+**Levels:**
+
+```javascript
+// level_thresholds table
+Level 1: 0-99 points (Novice)
+Level 2: 100-249 points (Learner)
+Level 3: 250-499 points (Achiever)
+Level 4: 500-999 points (Expert)
+Level 5: 1000+ points (Master)
+```
+
+**Badges:**
+
+**Categories:**
+- Academic (GPA milestones)
+- Clinical (hours logged)
+- Community (forum participation)
+- Application (milestones reached)
+- Special (rare achievements)
+
+**Example Badges:**
+- "First Steps" - Complete onboarding
+- "Dedicated" - 30-day clinical streak
+- "Helpful" - 50 helpful reactions
+- "Applicant" - Submit first application
+- "Networker" - 10 CRNA contacts
+
+---
+
+## 🔧 State Management
+
+### Authentication State
+
+**Provider:** `useAuth` hook  
+**Storage:** React Context + Supabase Session
+
+```javascript
+// AuthContext structure
+{
+  user: {
+    id: "uuid",
+    email: "user@example.com",
+    user_metadata: { name: "John Doe" },
+    role: "user",
+    entitlements: ["active_membership"],
+    app_metadata: { role: "user" }
+  },
+  session: { /* Supabase session object */ },
+  isLoading: boolean,
+  error: string | null
+}
+```
+
+**Key Functions:**
+- `signUp(email, password, metadata)`
+- `signIn(email, password)`
+- `signOut()`
+- `enrichUserData(user)` - Fetches role + entitlements
+
+---
+
+### Program State
+
+**Provider:** `usePrograms` hook  
+**Storage:** Supabase (authenticated) or localStorage (demo)
+
+```javascript
+// usePrograms return value
+{
+  targetPrograms: [...],      // Programs user is applying to
+  savedPrograms: [...],        // Programs user saved for later
+  tasks: [...],                // Generated tasks from programs
+  loading: boolean,
+  
+  // Actions
+  saveSchool(schoolId),
+  convertToTarget(programId),
+  removeProgram(programId),
+  updateTargetData(programId, updates),
+  toggleChecklistItem(programId, itemId)
+}
+```
+
+---
+
+### Persistent State Pattern
+
+**Hook:** `usePersistentState`
+
+**Purpose:** Sync state with localStorage automatically
+
+```javascript
+const [value, setValue] = usePersistentState('key', defaultValue);
+
+// Automatically saves to localStorage on change
+// Loads from localStorage on mount
+```
+
+**Used For:**
+- User preferences
+- Draft content
+- UI state (sidebar collapsed, etc.)
+- Demo mode data
+
+---
+
+## 🔌 API Integration
+
+### Supabase Integration
+
+**Configuration:** `src/lib/supabase.js`
+
+```javascript
+import { createClient } from '@supabase/supabase-js';
+
+export const supabase = createClient(
+  import.meta.env.VITE_SUPABASE_URL,
+  import.meta.env.VITE_SUPABASE_ANON_KEY
+);
+
+export const isSupabaseConfigured = () => {
+  return !!(
+    import.meta.env.VITE_SUPABASE_URL &&
+    import.meta.env.VITE_SUPABASE_ANON_KEY
+  );
+};
+```
+
+**Common Patterns:**
+
+**1. Fetch Data:**
+```javascript
+const { data, error } = await supabase
+  .from('table_name')
+  .select('*')
+  .eq('user_id', user.id);
+```
+
+**2. Insert Data:**
+```javascript
+const { data, error } = await supabase
+  .from('table_name')
+  .insert({ column: value })
+  .select()
+  .single();
+```
+
+**3. Update Data:**
+```javascript
+const { error } = await supabase
+  .from('table_name')
+  .update({ column: newValue })
+  .eq('id', recordId);
+```
+
+**4. Call RPC Function:**
+```javascript
+const { data, error } = await supabase.rpc('function_name', {
+  param1: value1,
+  param2: value2
+});
+```
+
+**5. Upload File:**
+```javascript
+const { data, error } = await supabase.storage
+  .from('bucket_name')
+  .upload('path/to/file.jpg', file);
+```
+
+---
+
+### External APIs
+
+**1. Cal.com (Scheduling)**
+- Provider availability management
+- Booking creation
+- Calendar sync
+
+**2. Stripe (Payments)**
+- Payment processing
+- Provider payouts
+- Subscription management (future)
+
+**3. Zoom (Video)**
+- Session links (via Cal.com integration)
+
+---
+
+## 📁 File Structure
+
+### Key Directories
+
+**`/src/components/`** (433 files)
+```
+components/
+├── layout/           # App shell, navigation
+│   ├── app-layout.jsx
+│   ├── nav-sidebar.jsx
+│   └── page-wrapper.jsx
+├── ui/               # Base components
+│   ├── button.jsx
+│   ├── card.jsx
+│   ├── badge.jsx
+│   └── ...
+├── features/         # Feature components
+│   ├── dashboard/
+│   ├── programs/
+│   ├── trackers/
+│   └── marketplace/
+└── auth/             # Auth components
+    ├── ProtectedRoute.jsx
+    └── LoginForm.jsx
+```
+
+**`/src/hooks/`** (57 files)
+```
+hooks/
+├── useAuth.jsx           # Authentication
+├── usePrograms.js        # Program management
+├── useSchools.js         # School data
+├── useTrackers.js        # Clinical/shadow tracking
+├── useBookings.js        # Marketplace bookings
+├── useForums.js          # Community forums
+├── useModules.js         # Learning modules
+├── usePoints.js          # Gamification
+└── ...
+```
+
+**`/src/pages/`** (88 files)
+```
+pages/
+├── applicant/        # Student pages
+│   ├── DashboardPage.jsx
+│   ├── MyProgramsPage.jsx
+│   ├── SchoolDatabasePage.jsx
+│   └── ...
+├── srna/             # Provider pages
+│   ├── ProviderDashboardPage.jsx
+│   ├── ProviderBookingsPage.jsx
+│   └── ...
+├── admin/            # Admin pages
+│   ├── AdminDashboardPage.jsx
+│   ├── ModulesListPage.jsx
+│   └── ...
+└── shared/           # Shared pages
+    ├── LoginPage.jsx
+    ├── RegisterPage.jsx
+    └── ...
+```
+
+---
+
+## 🎯 Summary
+
+### Application Capabilities
+
+**For Students:**
+- ✅ Research 150+ CRNA programs
+- ✅ Track multiple applications
+- ✅ Manage requirements and deadlines
+- ✅ Log clinical experience
+- ✅ Track shadowing hours
+- ✅ Connect with mentors
+- ✅ Access learning resources
+- ✅ Participate in community
+
+**For Providers:**
+- ✅ Offer mentorship services
+- ✅ Manage availability
+- ✅ Accept bookings
+- ✅ Conduct sessions
+- ✅ Earn income
+
+**For Admins:**
+- ✅ Manage all content
+- ✅ Approve providers
+- ✅ Moderate community
+- ✅ View analytics
+- ✅ Configure access control
+
+### Technical Highlights
+
+- **Modern Stack:** React 18, Vite, Supabase
+- **80+ Database Tables:** Comprehensive data model
+- **100+ Routes:** Full-featured application
+- **Role-Based Access:** 3 user roles with entitlements
+- **Offline Support:** localStorage fallback
+- **Real-time Updates:** Supabase realtime
+- **File Uploads:** Supabase storage
+- **Payment Processing:** Stripe integration
+- **Video Sessions:** Zoom integration
+- **Gamification:** Points, levels, badges
+
+---
+
+**End of Documentation**
+
+*For questions or clarifications, refer to specific files mentioned throughout this document.*
