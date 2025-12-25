@@ -46,9 +46,10 @@ import { GreEditSheet } from '@/components/features/stats/GreEditSheet';
 import { CertificationsEditSheet } from '@/components/features/stats/CertificationsEditSheet';
 import { PrerequisitesEditSheet } from '@/components/features/stats/PrerequisitesEditSheet';
 import { ResumeBoosterEditSheet } from '@/components/features/stats/ResumeBoosterEditSheet';
-import { ClinicalExperienceEditSheet } from '@/components/features/stats/ClinicalExperienceEditSheet';
-import { ShadowExperienceEditSheet } from '@/components/features/stats/ShadowExperienceEditSheet';
-import { EventsEditSheet } from '@/components/features/stats/EventsEditSheet';
+// TODO: Create these missing edit sheet components
+// import { ClinicalExperienceEditSheet } from '@/components/features/stats/ClinicalExperienceEditSheet';
+// import { ShadowExperienceEditSheet } from '@/components/features/stats/ShadowExperienceEditSheet';
+// import { EventsEditSheet } from '@/components/features/stats/EventsEditSheet';
 
 // Hooks
 import { useProfileCompletion, PROFILE_ACTIONS } from '@/hooks/useProfileCompletion';
@@ -365,193 +366,194 @@ export function MyStatsPage() {
   return (
     <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-orange-50 via-amber-50/80 to-pink-50/25">
       <PageWrapper className="px-8 md:px-16 lg:px-24 xl:px-32 pt-8 md:pt-12 lg:pt-16 pb-8 bg-transparent relative z-10">
-      <PageHeader
-        title="My Stats"
-        description="Your application snapshot and progress"
-      />
-
-      {/* Mobile ReadyScore - Shows at top on mobile only */}
-      <div className="lg:hidden mb-6">
-        <ReadyScoreCompactCard
-          readinessData={readinessData}
-          weeklyFocus={null}
-          onFocusClick={() => {}}
+        <PageHeader
+          title="My Stats"
+          description="Your application snapshot and progress"
         />
-      </div>
 
-      {/* Main Layout: Content + Sidebar */}
-      <div className="flex gap-6">
-        {/* Main Content */}
-        <div className="flex-1 min-w-0 space-y-6">
-
-          {/* Hero with Target Programs integrated */}
-          <StatsHeroSection
-            user={mockUser}
-            isOwnProfile={isOwnProfile}
-            onEdit={handleEdit}
-            targetPrograms={targetPrograms}
+        {/* Mobile ReadyScore - Shows at top on mobile only */}
+        <div className="lg:hidden mb-6">
+          <ReadyScoreCompactCard
+            readinessData={readinessData}
+            weeklyFocus={null}
+            onFocusClick={() => { }}
           />
+        </div>
 
-          {/* Academic Details (vertical) + Prerequisites (side-by-side) */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div id="academic-section" className="rounded-2xl transition-all duration-300">
-              <AcademicDetailsSection
-                academicProfile={academicProfile}
-                clinicalProfile={clinicalProfile}
-                onEdit={handleEdit}
-                isEditable={isOwnProfile}
-              />
-            </div>
-            <div id="prerequisites-section" className="rounded-2xl transition-all duration-300">
-              <PrerequisitesSubCard
-                academicProfile={academicProfile}
-                onEdit={handleEdit}
-                onQuickStart={() => setShowPrereqWizard(true)}
-                isEditable={isOwnProfile}
-              />
-            </div>
-          </div>
+        {/* Main Layout: Content + Sidebar */}
+        <div className="flex gap-6">
+          {/* Main Content */}
+          <div className="flex-1 min-w-0 space-y-6">
 
-          {/* Clinical + Shadow + Events - 3-column layout */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div id="clinical-section" className="rounded-2xl transition-all duration-300">
-              <ClinicalExperienceSection
-                clinicalProfile={clinicalProfile}
-                clinicalEntries={mockClinicalEntries || []}
-                onViewTracker={() => handleViewTracker('clinical')}
-                onEdit={() => handleEdit('clinical')}
-                isEditable={isOwnProfile}
-              />
-            </div>
-            <div id="shadow-section" className="rounded-2xl transition-all duration-300">
-              <ShadowSummaryCard
-                shadowStats={{ ...shadowStats, ...shadowProfile }}
-                onViewTracker={() => handleViewTracker('shadow')}
-                onEdit={() => handleEdit('shadow')}
-                isEditable={isOwnProfile}
-              />
-            </div>
-            <div id="events-section" className="rounded-2xl transition-all duration-300">
-              <EventsSummaryCard
-                eventStats={{
-                  totalLogged: mockTrackerStats.events.totalLogged,
-                  categoryBreakdown: {
-                    aana_state: 1,
-                    info_session: 1,
-                  },
-                }}
-                eventNames={eventNames}
-                categoriesAttended={eventsProfile.categoriesAttended}
-                onViewTracker={() => handleViewTracker('events')}
-                onEdit={() => handleEdit('events')}
-                isEditable={isOwnProfile}
-              />
-            </div>
-          </div>
+            {/* Hero with Target Programs integrated */}
+            <StatsHeroSection
+              user={mockUser}
+              isOwnProfile={isOwnProfile}
+              onEdit={handleEdit}
+              targetPrograms={targetPrograms}
+            />
 
-          {/* Leadership + Research/Community Side-by-Side */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div id="leadership-section" className="rounded-2xl transition-all duration-300">
-              <LeadershipSection
+            {/* Academic Details (vertical) + Prerequisites (side-by-side) */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div id="academic-section" className="rounded-2xl transition-all duration-300">
+                <AcademicDetailsSection
+                  academicProfile={academicProfile}
+                  clinicalProfile={clinicalProfile}
+                  onEdit={handleEdit}
+                  isEditable={isOwnProfile}
+                />
+              </div>
+              <div id="prerequisites-section" className="rounded-2xl transition-all duration-300">
+                <PrerequisitesSubCard
+                  academicProfile={academicProfile}
+                  onEdit={handleEdit}
+                  onQuickStart={() => setShowPrereqWizard(true)}
+                  isEditable={isOwnProfile}
+                />
+              </div>
+            </div>
+
+            {/* Clinical + Shadow + Events - 3-column layout */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div id="clinical-section" className="rounded-2xl transition-all duration-300">
+                <ClinicalExperienceSection
+                  clinicalProfile={clinicalProfile}
+                  clinicalEntries={mockClinicalEntries || []}
+                  onViewTracker={() => handleViewTracker('clinical')}
+                  onEdit={() => handleEdit('clinical')}
+                  isEditable={isOwnProfile}
+                />
+              </div>
+              <div id="shadow-section" className="rounded-2xl transition-all duration-300">
+                <ShadowSummaryCard
+                  shadowStats={{ ...shadowStats, ...shadowProfile }}
+                  onViewTracker={() => handleViewTracker('shadow')}
+                  onEdit={() => handleEdit('shadow')}
+                  isEditable={isOwnProfile}
+                />
+              </div>
+              <div id="events-section" className="rounded-2xl transition-all duration-300">
+                <EventsSummaryCard
+                  eventStats={{
+                    totalLogged: mockTrackerStats.events.totalLogged,
+                    categoryBreakdown: {
+                      aana_state: 1,
+                      info_session: 1,
+                    },
+                  }}
+                  eventNames={eventNames}
+                  categoriesAttended={eventsProfile.categoriesAttended}
+                  onViewTracker={() => handleViewTracker('events')}
+                  onEdit={() => handleEdit('events')}
+                  isEditable={isOwnProfile}
+                />
+              </div>
+            </div>
+
+            {/* Leadership + Research/Community Side-by-Side */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div id="leadership-section" className="rounded-2xl transition-all duration-300">
+                <LeadershipSection
+                  resumeBoosters={resumeBoosters}
+                  onEdit={handleEdit}
+                  isEditable={isOwnProfile}
+                />
+              </div>
+              <ResearchCommunitySection
                 resumeBoosters={resumeBoosters}
                 onEdit={handleEdit}
                 isEditable={isOwnProfile}
               />
             </div>
-            <ResearchCommunitySection
-              resumeBoosters={resumeBoosters}
-              onEdit={handleEdit}
+
+            {/* Additional Information - Full width */}
+            <AdditionalInfoCard
+              additionalInfo={userNotes?.additionalInfo}
+              onSave={(value) => handleSaveNote('additionalInfo', value)}
               isEditable={isOwnProfile}
             />
+
+            {/* Mobile-only Notes Section */}
+            <div className="lg:hidden">
+              <NotesSection
+                userNotes={userNotes}
+                adminNotes={mockAdminNotes}
+                mentorNotes={mockMentorNotes}
+                viewerRole={viewerRole}
+                currentMentorId="mentor_001"
+                onSaveNote={handleSaveNote}
+                isOwnProfile={isOwnProfile}
+              />
+            </div>
           </div>
 
-          {/* Additional Information - Full width */}
-          <AdditionalInfoCard
-            additionalInfo={userNotes?.additionalInfo}
-            onSave={(value) => handleSaveNote('additionalInfo', value)}
-            isEditable={isOwnProfile}
+          {/* Sidebar - Desktop only (includes Notes) */}
+          <StatsSidebar
+            readinessData={readinessData}
+            priorityActions={priorityActions}
+            onNavigate={handleNavigate}
+            user={mockUser}
+            userNotes={userNotes}
+            adminNotes={mockAdminNotes}
+            mentorNotes={mockMentorNotes}
+            viewerRole={viewerRole}
+            currentMentorId="mentor_001"
+            onSaveNote={handleSaveNote}
+            isOwnProfile={isOwnProfile}
+            // Profile completion props for sidebar card
+            profileCompletion={{
+              shouldShowIndicator,
+              completedCount,
+              requiredActions,
+              isComplete: isProfileComplete,
+              pointsReward,
+              completedLabels,
+              suggestedActions,
+              onDismiss: isProfileComplete ? dismissIndicator : undefined,
+            }}
+            onScrollToSection={handleScrollToSection}
+            onEdit={handleEdit}
           />
-
-          {/* Mobile-only Notes Section */}
-          <div className="lg:hidden">
-            <NotesSection
-              userNotes={userNotes}
-              adminNotes={mockAdminNotes}
-              mentorNotes={mockMentorNotes}
-              viewerRole={viewerRole}
-              currentMentorId="mentor_001"
-              onSaveNote={handleSaveNote}
-              isOwnProfile={isOwnProfile}
-            />
-          </div>
         </div>
 
-        {/* Sidebar - Desktop only (includes Notes) */}
-        <StatsSidebar
-          readinessData={readinessData}
-          priorityActions={priorityActions}
-          onNavigate={handleNavigate}
-          user={mockUser}
-          userNotes={userNotes}
-          adminNotes={mockAdminNotes}
-          mentorNotes={mockMentorNotes}
-          viewerRole={viewerRole}
-          currentMentorId="mentor_001"
-          onSaveNote={handleSaveNote}
-          isOwnProfile={isOwnProfile}
-          // Profile completion props for sidebar card
-          profileCompletion={{
-            shouldShowIndicator,
-            completedCount,
-            requiredActions,
-            isComplete: isProfileComplete,
-            pointsReward,
-            completedLabels,
-            suggestedActions,
-            onDismiss: isProfileComplete ? dismissIndicator : undefined,
-          }}
-          onScrollToSection={handleScrollToSection}
-          onEdit={handleEdit}
+        {/* Edit Sheets */}
+        <GpaEditSheet
+          open={editSheet.type === 'gpa' && editSheet.open}
+          onOpenChange={(open) => setEditSheet((prev) => ({ ...prev, open }))}
+          initialValues={academicProfile}
+          onSave={handleSaveGpa}
         />
-      </div>
 
-      {/* Edit Sheets */}
-      <GpaEditSheet
-        open={editSheet.type === 'gpa' && editSheet.open}
-        onOpenChange={(open) => setEditSheet((prev) => ({ ...prev, open }))}
-        initialValues={academicProfile}
-        onSave={handleSaveGpa}
-      />
+        <GreEditSheet
+          open={editSheet.type === 'gre' && editSheet.open}
+          onOpenChange={(open) => setEditSheet((prev) => ({ ...prev, open }))}
+          initialValues={academicProfile}
+          onSave={handleSaveGre}
+        />
 
-      <GreEditSheet
-        open={editSheet.type === 'gre' && editSheet.open}
-        onOpenChange={(open) => setEditSheet((prev) => ({ ...prev, open }))}
-        initialValues={academicProfile}
-        onSave={handleSaveGre}
-      />
+        <CertificationsEditSheet
+          open={editSheet.type === 'certifications' && editSheet.open}
+          onOpenChange={(open) => setEditSheet((prev) => ({ ...prev, open }))}
+          initialValues={clinicalProfile}
+          onSave={handleSaveCertifications}
+        />
 
-      <CertificationsEditSheet
-        open={editSheet.type === 'certifications' && editSheet.open}
-        onOpenChange={(open) => setEditSheet((prev) => ({ ...prev, open }))}
-        initialValues={clinicalProfile}
-        onSave={handleSaveCertifications}
-      />
+        <PrerequisitesEditSheet
+          open={editSheet.type === 'prerequisites' && editSheet.open}
+          onOpenChange={(open) => setEditSheet((prev) => ({ ...prev, open }))}
+          initialValues={academicProfile}
+          onSave={handleSavePrerequisites}
+        />
 
-      <PrerequisitesEditSheet
-        open={editSheet.type === 'prerequisites' && editSheet.open}
-        onOpenChange={(open) => setEditSheet((prev) => ({ ...prev, open }))}
-        initialValues={academicProfile}
-        onSave={handleSavePrerequisites}
-      />
+        <ResumeBoosterEditSheet
+          open={editSheet.type?.startsWith('resume_') && editSheet.open}
+          onOpenChange={(open) => setEditSheet((prev) => ({ ...prev, open }))}
+          initialValues={resumeBoosters}
+          boosterType={editSheet.type?.replace('resume_', '') || 'research'}
+          onSave={handleSaveResumeBoosters}
+        />
 
-      <ResumeBoosterEditSheet
-        open={editSheet.type?.startsWith('resume_') && editSheet.open}
-        onOpenChange={(open) => setEditSheet((prev) => ({ ...prev, open }))}
-        initialValues={resumeBoosters}
-        boosterType={editSheet.type?.replace('resume_', '') || 'research'}
-        onSave={handleSaveResumeBoosters}
-      />
-
+        {/* TODO: Uncomment when these components are created
       <ClinicalExperienceEditSheet
         open={editSheet.type === 'clinical' && editSheet.open}
         onOpenChange={(open) => setEditSheet((prev) => ({ ...prev, open }))}
@@ -572,24 +574,25 @@ export function MyStatsPage() {
         initialValues={eventsProfile}
         onSave={handleSaveEvents}
       />
+      */}
 
-      {/* Prerequisite Quick Start Wizard */}
-      <PrerequisiteQuickStartWizard
-        open={showPrereqWizard}
-        onOpenChange={setShowPrereqWizard}
-        existingCourses={academicProfile.completedPrerequisites || []}
-        onComplete={handlePrereqWizardComplete}
-      />
+        {/* Prerequisite Quick Start Wizard */}
+        <PrerequisiteQuickStartWizard
+          open={showPrereqWizard}
+          onOpenChange={setShowPrereqWizard}
+          existingCourses={academicProfile.completedPrerequisites || []}
+          onComplete={handlePrereqWizardComplete}
+        />
 
-      {/* Checklist Sync Dialog - appears when user adds GRE scores or CCRN certification */}
-      <ChecklistSyncDialog
-        open={syncDialog.open}
-        onClose={handleSyncDismiss}
-        itemType={syncDialog.itemType}
-        schoolCount={targetPrograms.length}
-        onConfirm={handleSyncConfirm}
-        source="profile"
-      />
+        {/* Checklist Sync Dialog - appears when user adds GRE scores or CCRN certification */}
+        <ChecklistSyncDialog
+          open={syncDialog.open}
+          onClose={handleSyncDismiss}
+          itemType={syncDialog.itemType}
+          schoolCount={targetPrograms.length}
+          onConfirm={handleSyncConfirm}
+          source="profile"
+        />
       </PageWrapper>
     </div>
   );
