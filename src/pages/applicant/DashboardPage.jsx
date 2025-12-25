@@ -144,9 +144,9 @@ export function DashboardPage() {
   const nextLevelInfo = getNextLevelInfo(mockUser.points);
 
   // Get dynamic greeting and daily quote (memoized to prevent re-renders changing them)
-  // Use user's name from auth metadata
-  const userName = user?.user_metadata?.name || user?.email?.split('@')[0] || 'there';
-  const greeting = useMemo(() => getSessionGreeting(userName), [userName]);
+  // Use user's first_name from auth, fall back to mockUser for demo
+  const userFirstName = user?.user_metadata?.first_name || mockUser.preferredName;
+  const greeting = useMemo(() => getSessionGreeting(userFirstName), [userFirstName]);
   const dailyQuote = useMemo(() => getDailyQuote(), []);
 
   // Get guidance state for Next Best Steps
@@ -347,248 +347,248 @@ export function DashboardPage() {
           </p>
         </div>
 
-        {/* Main Layout: Content + Sidebar on Desktop */}
-        <div className="flex gap-6">
-          {/* Main Content Column */}
-          <div className="flex-1 min-w-0 space-y-6">
-            {/* Row 1: To-Do List with integrated suggestions */}
-            <ToDoListWidget
-              tasks={tasks}
-              programs={targetPrograms}
-              showProgramName={true}
-              onTaskComplete={handleTaskComplete}
-              onTaskSave={handleTaskSave}
-              onTaskDelete={handleTaskDelete}
-              // Suggestion-related props
-              dashboardTasks={dashboardTasks}
-              dismissedSuggestions={dismissedSuggestions}
-              onAddDashboardTask={addDashboardTask}
-              onDismissSuggestion={dismissSuggestion}
-            />
+      {/* Main Layout: Content + Sidebar on Desktop */}
+      <div className="flex gap-6">
+        {/* Main Content Column */}
+        <div className="flex-1 min-w-0 space-y-6">
+          {/* Row 1: To-Do List with integrated suggestions */}
+          <ToDoListWidget
+            tasks={tasks}
+            programs={targetPrograms}
+            showProgramName={true}
+            onTaskComplete={handleTaskComplete}
+            onTaskSave={handleTaskSave}
+            onTaskDelete={handleTaskDelete}
+            // Suggestion-related props
+            dashboardTasks={dashboardTasks}
+            dismissedSuggestions={dismissedSuggestions}
+            onAddDashboardTask={addDashboardTask}
+            onDismissSuggestion={dismissSuggestion}
+          />
 
-            {/* Target Programs - Horizontal Scroll */}
-            <div className="bg-white rounded-[2.5rem] border border-gray-50 overflow-hidden">
-              <div className="px-6 pt-6 pb-4">
-                <div className="flex items-center justify-between">
-                  <h3 className="flex items-center gap-2 text-xl font-semibold text-gray-900">
-                    <div className="flex items-center justify-center w-12 h-12 rounded-2xl bg-gradient-to-br from-orange-100 to-orange-50">
-                      <Target className="w-6 h-6 text-orange-600" />
-                    </div>
-                    Target Programs
-                    {targetPrograms.length > 0 && (
-                      <span className="text-xs font-normal text-gray-500">
-                        ({targetPrograms.length})
-                      </span>
-                    )}
-                  </h3>
-                  <Button variant="ghost" size="sm" asChild>
-                    <a href="/my-programs">
-                      View All <ArrowRight className="w-4 h-4 ml-1" />
-                    </a>
-                  </Button>
+        {/* Target Programs - Horizontal Scroll */}
+        <div className="bg-white rounded-[2.5rem] border border-gray-50 overflow-hidden">
+          <div className="px-6 pt-6 pb-4">
+            <div className="flex items-center justify-between">
+              <h3 className="flex items-center gap-2 text-xl font-semibold text-gray-900">
+                <div className="flex items-center justify-center w-12 h-12 rounded-2xl bg-gradient-to-br from-orange-100 to-orange-50">
+                  <Target className="w-6 h-6 text-orange-600" />
                 </div>
-              </div>
-              <div className="px-6 pb-6">
-                {targetPrograms.length > 0 ? (
-                  <div className="flex gap-4 overflow-x-auto pb-2 -mx-1 px-1 scrollbar-thin scrollbar-thumb-gray-200 scrollbar-track-transparent">
-                    {targetPrograms.map((savedProgram) => {
-                      const program = savedProgram.program;
-                      const imageUrl = program?.imageUrl || `https://images.unsplash.com/photo-1562774053-701939374585?w=400&h=200&fit=crop`;
-                      const progress = savedProgram.targetData?.progress || 0;
-                      const completedItems = savedProgram.targetData?.completedItems || 0;
-                      const totalItems = savedProgram.targetData?.totalItems || 8;
-
-                      return (
-                        <a
-                          key={savedProgram.id}
-                          href={`/my-programs/${savedProgram.id}`}
-                          className="group shrink-0 w-56 rounded-2xl border border-orange-200/60 bg-white overflow-hidden hover:shadow-md hover:border-orange-300 hover:scale-[1.02] transition-all"
-                        >
-                          {/* Program Image */}
-                          <div className="relative h-24 overflow-hidden">
-                            <img
-                              src={imageUrl}
-                              alt={program?.schoolName}
-                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                            />
-                            {/* Status Badge Overlay */}
-                            {savedProgram.targetData && (
-                              <div className="absolute top-2 right-2">
-                                <StatusBadge status={savedProgram.targetData.status} size="sm" />
-                              </div>
-                            )}
-                          </div>
-
-                          {/* Program Info */}
-                          <div className="p-3">
-                            <p className="font-semibold text-sm truncate mb-1 group-hover:text-orange-600 transition-colors">
-                              {program?.schoolName}
-                            </p>
-                            <div className="flex items-center gap-2 text-xs text-gray-500 mb-2">
-                              <Calendar className="w-3 h-3" />
-                              <span>
-                                {program?.applicationDeadline
-                                  ? new Date(program.applicationDeadline).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-                                  : 'No deadline'}
-                              </span>
-                            </div>
-                            {/* Progress Bar */}
-                            <div className="space-y-1">
-                              <div className="flex items-center gap-2">
-                                <div className="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                                  <div
-                                    className="h-full bg-orange-400 rounded-full transition-all"
-                                    style={{ width: `${progress}%` }}
-                                  />
-                                </div>
-                                <span className="text-xs font-medium text-gray-600">{progress}%</span>
-                              </div>
-                              <p className="text-xs text-gray-400">
-                                {completedItems}/{totalItems} tasks
-                              </p>
-                            </div>
-                          </div>
-                        </a>
-                      );
-                    })}
-                  </div>
-                ) : (
-                  <EmptyState
-                    icon={Target}
-                    title="No target programs yet"
-                    description="Convert a saved program to a target to start tracking your application."
-                    actionLabel="Browse Schools"
-                    actionHref="/schools"
-                  />
+                Target Programs
+                {targetPrograms.length > 0 && (
+                  <span className="text-xs font-normal text-gray-500">
+                    ({targetPrograms.length})
+                  </span>
                 )}
-              </div>
+              </h3>
+              <Button variant="ghost" size="sm" asChild>
+                <a href="/my-programs">
+                  View All <ArrowRight className="w-4 h-4 ml-1" />
+                </a>
+              </Button>
             </div>
+          </div>
+          <div className="px-6 pb-6">
+            {targetPrograms.length > 0 ? (
+              <div className="flex gap-4 overflow-x-auto pb-2 -mx-1 px-1 scrollbar-thin scrollbar-thumb-gray-200 scrollbar-track-transparent">
+                {targetPrograms.map((savedProgram) => {
+                  const program = savedProgram.program;
+                  const imageUrl = program?.imageUrl || `https://images.unsplash.com/photo-1562774053-701939374585?w=400&h=200&fit=crop`;
+                  const progress = savedProgram.targetData?.progress || 0;
+                  const completedItems = savedProgram.targetData?.completedItems || 0;
+                  const totalItems = savedProgram.targetData?.totalItems || 8;
 
-            {/* Application Milestones (Carousel) */}
-            <div className="bg-white rounded-[2.5rem] border border-gray-50 overflow-hidden">
-              <div className="px-6 pt-6 pb-4 flex items-center justify-between">
-                <h3 className="flex items-center gap-2 text-xl font-semibold text-gray-900">
-                  <div className="flex items-center justify-center w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-400 shadow-sm">
-                    <CheckCircle2 className="w-6 h-6 text-white" />
-                  </div>
-                  My Application Milestones
-                </h3>
-                <span className="text-sm text-gray-500">
-                  {milestones.filter(m => {
-                    const completed = m.subItems.filter(s => s.completed).length;
-                    return completed === m.subItems.length;
-                  }).length} of {milestones.length} completed
-                </span>
+                  return (
+                    <a
+                      key={savedProgram.id}
+                      href={`/my-programs/${savedProgram.id}`}
+                      className="group shrink-0 w-56 rounded-2xl border border-orange-200/60 bg-white overflow-hidden hover:shadow-md hover:border-orange-300 hover:scale-[1.02] transition-all"
+                    >
+                      {/* Program Image */}
+                      <div className="relative h-24 overflow-hidden">
+                        <img
+                          src={imageUrl}
+                          alt={program?.schoolName}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        />
+                        {/* Status Badge Overlay */}
+                        {savedProgram.targetData && (
+                          <div className="absolute top-2 right-2">
+                            <StatusBadge status={savedProgram.targetData.status} size="sm" />
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Program Info */}
+                      <div className="p-3">
+                        <p className="font-semibold text-sm truncate mb-1 group-hover:text-orange-600 transition-colors">
+                          {program?.schoolName}
+                        </p>
+                        <div className="flex items-center gap-2 text-xs text-gray-500 mb-2">
+                          <Calendar className="w-3 h-3" />
+                          <span>
+                            {program?.applicationDeadline
+                              ? new Date(program.applicationDeadline).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+                              : 'No deadline'}
+                          </span>
+                        </div>
+                        {/* Progress Bar */}
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-2">
+                            <div className="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                              <div
+                                className="h-full bg-orange-400 rounded-full transition-all"
+                                style={{ width: `${progress}%` }}
+                              />
+                            </div>
+                            <span className="text-xs font-medium text-gray-600">{progress}%</span>
+                          </div>
+                          <p className="text-xs text-gray-400">
+                            {completedItems}/{totalItems} tasks
+                          </p>
+                        </div>
+                      </div>
+                    </a>
+                  );
+                })}
               </div>
-              <div className="relative px-6 pb-6">
-                {/* Left scroll arrow */}
-                <button
-                  onClick={() => {
-                    const container = document.getElementById('milestone-carousel');
-                    if (container) container.scrollBy({ left: -150, behavior: 'smooth' });
-                  }}
-                  className="absolute left-0 top-1/2 -translate-y-1/2 z-10 w-8 h-8 rounded-full bg-white/90 shadow-md border border-gray-100 hover:bg-white hover:shadow-lg flex items-center justify-center transition-all hover:scale-105"
-                  aria-label="Scroll left"
-                >
-                  <ChevronLeft className="w-4 h-4 text-gray-500" />
-                </button>
+            ) : (
+              <EmptyState
+                icon={Target}
+                title="No target programs yet"
+                description="Convert a saved program to a target to start tracking your application."
+                actionLabel="Browse Schools"
+                actionHref="/schools"
+              />
+            )}
+          </div>
+        </div>
 
-                {/* Milestone cards container - pt-2 for checkmark overflow */}
-                <div
-                  id="milestone-carousel"
-                  className="flex gap-3 overflow-x-auto pt-2 pb-2 px-6 scrollbar-none scroll-smooth"
-                  style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
-                >
-                  {milestones.map((milestone) => (
-                    <MilestoneCard
-                      key={milestone.id}
-                      milestone={milestone}
-                      onClick={() => setSelectedMilestoneId(milestone.id)}
-                    />
-                  ))}
+        {/* Application Milestones (Carousel) */}
+        <div className="bg-white rounded-[2.5rem] border border-gray-50 overflow-hidden">
+            <div className="px-6 pt-6 pb-4 flex items-center justify-between">
+              <h3 className="flex items-center gap-2 text-xl font-semibold text-gray-900">
+                <div className="flex items-center justify-center w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-400 shadow-sm">
+                  <CheckCircle2 className="w-6 h-6 text-white" />
                 </div>
-
-                {/* Right scroll arrow */}
-                <button
-                  onClick={() => {
-                    const container = document.getElementById('milestone-carousel');
-                    if (container) container.scrollBy({ left: 150, behavior: 'smooth' });
-                  }}
-                  className="absolute right-0 top-1/2 -translate-y-1/2 z-10 w-8 h-8 rounded-full bg-white/90 shadow-md border border-gray-100 hover:bg-white hover:shadow-lg flex items-center justify-center transition-all hover:scale-105"
-                  aria-label="Scroll right"
-                >
-                  <ChevronRight className="w-4 h-4 text-gray-500" />
-                </button>
-              </div>
+                My Application Milestones
+              </h3>
+              <span className="text-sm text-gray-500">
+                {milestones.filter(m => {
+                  const completed = m.subItems.filter(s => s.completed).length;
+                  return completed === m.subItems.length;
+                }).length} of {milestones.length} completed
+              </span>
             </div>
+            <div className="relative px-6 pb-6">
+              {/* Left scroll arrow */}
+              <button
+                onClick={() => {
+                  const container = document.getElementById('milestone-carousel');
+                  if (container) container.scrollBy({ left: -150, behavior: 'smooth' });
+                }}
+                className="absolute left-0 top-1/2 -translate-y-1/2 z-10 w-8 h-8 rounded-full bg-white/90 shadow-md border border-gray-100 hover:bg-white hover:shadow-lg flex items-center justify-center transition-all hover:scale-105"
+                aria-label="Scroll left"
+              >
+                <ChevronLeft className="w-4 h-4 text-gray-500" />
+              </button>
 
-            {/* Community Activity Widget */}
-            <CommunityActivityWidget />
+              {/* Milestone cards container - pt-2 for checkmark overflow */}
+              <div
+                id="milestone-carousel"
+                className="flex gap-3 overflow-x-auto pt-2 pb-2 px-6 scrollbar-none scroll-smooth"
+                style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+              >
+                {milestones.map((milestone) => (
+                  <MilestoneCard
+                    key={milestone.id}
+                    milestone={milestone}
+                    onClick={() => setSelectedMilestoneId(milestone.id)}
+                  />
+                ))}
+              </div>
 
-            {/* Sidebar - Mobile Only (shown at bottom) */}
-            <div className="lg:hidden space-y-4">
-              {/* Next Best Steps - Mobile (compact, shows 1 step) */}
-              <NextBestStepsCard
-                steps={nextBestSteps}
-                supportMode={supportMode}
-                onDismiss={dismissStep}
-                onStepClick={trackStepClick}
-                compact={true}
-              />
-              {/* Mobile Nudge - Single most important */}
-              <MobileNudge data={smartPromptsData} onAction={handleNudgeAction} />
-              <CalendarWidget targetPrograms={targetPrograms} />
-              <ProgressTrackerCard
-                points={mockUser.points}
-                level={mockUser.level}
-                levelName={mockUser.levelName}
-                nextLevelProgress={nextLevelInfo.progress}
-                pointsToNextLevel={nextLevelInfo.pointsToNext}
-                streak={mockTrackerStats.clinical.streak}
-                totalLogs={mockTrackerStats.clinical.totalLogs}
-                logMilestones={clinicalMilestones}
-                pointsPerLog={mockTrackerStats.clinical.pointsPerLog}
-                eqStreak={mockTrackerStats.eq.streak}
-              />
-              <DashboardSidebar {...sidebarProps} showCalendar={false} showProgress={false} showNudges={false} />
+              {/* Right scroll arrow */}
+              <button
+                onClick={() => {
+                  const container = document.getElementById('milestone-carousel');
+                  if (container) container.scrollBy({ left: 150, behavior: 'smooth' });
+                }}
+                className="absolute right-0 top-1/2 -translate-y-1/2 z-10 w-8 h-8 rounded-full bg-white/90 shadow-md border border-gray-100 hover:bg-white hover:shadow-lg flex items-center justify-center transition-all hover:scale-105"
+                aria-label="Scroll right"
+              >
+                <ChevronRight className="w-4 h-4 text-gray-500" />
+              </button>
             </div>
           </div>
 
-          {/* Sidebar - Desktop Only */}
-          <DashboardSidebar {...sidebarProps} className="hidden lg:block w-[29%] min-w-[380px] shrink-0" />
+        {/* Community Activity Widget */}
+        <CommunityActivityWidget />
+
+        {/* Sidebar - Mobile Only (shown at bottom) */}
+          <div className="lg:hidden space-y-4">
+            {/* Next Best Steps - Mobile (compact, shows 1 step) */}
+            <NextBestStepsCard
+              steps={nextBestSteps}
+              supportMode={supportMode}
+              onDismiss={dismissStep}
+              onStepClick={trackStepClick}
+              compact={true}
+            />
+            {/* Mobile Nudge - Single most important */}
+            <MobileNudge data={smartPromptsData} onAction={handleNudgeAction} />
+            <CalendarWidget targetPrograms={targetPrograms} />
+            <ProgressTrackerCard
+              points={mockUser.points}
+              level={mockUser.level}
+              levelName={mockUser.levelName}
+              nextLevelProgress={nextLevelInfo.progress}
+              pointsToNextLevel={nextLevelInfo.pointsToNext}
+              streak={mockTrackerStats.clinical.streak}
+              totalLogs={mockTrackerStats.clinical.totalLogs}
+              logMilestones={clinicalMilestones}
+              pointsPerLog={mockTrackerStats.clinical.pointsPerLog}
+              eqStreak={mockTrackerStats.eq.streak}
+            />
+            <DashboardSidebar {...sidebarProps} showCalendar={false} showProgress={false} showNudges={false} />
+          </div>
         </div>
 
-        {/* Milestone Detail Modal */}
-        {selectedMilestone && (
-          <MilestoneDetail
-            milestone={selectedMilestone}
-            allMilestones={milestones}
-            open={!!selectedMilestone}
-            onOpenChange={(open) => !open && setSelectedMilestoneId(null)}
-            onToggleSubItem={handleToggleSubItem}
-            onNavigate={handleMilestoneNavigate}
-            celebratedMilestones={celebratedMilestones}
-            onMilestoneCelebrated={handleMilestoneCelebrated}
-          />
-        )}
+        {/* Sidebar - Desktop Only */}
+        <DashboardSidebar {...sidebarProps} className="hidden lg:block w-[29%] min-w-[380px] shrink-0" />
+      </div>
 
-        {/* Onboarding Modal - Full-screen questionnaire */}
-        <OnboardingModal
-          open={isOnboardingModalOpen}
-          onOpenChange={setIsOnboardingModalOpen}
-          onComplete={handleOnboardingComplete}
-          onSkip={handleOnboardingSkip}
-          initialData={onboardingData}
+      {/* Milestone Detail Modal */}
+      {selectedMilestone && (
+        <MilestoneDetail
+          milestone={selectedMilestone}
+          allMilestones={milestones}
+          open={!!selectedMilestone}
+          onOpenChange={(open) => !open && setSelectedMilestoneId(null)}
+          onToggleSubItem={handleToggleSubItem}
+          onNavigate={handleMilestoneNavigate}
+          celebratedMilestones={celebratedMilestones}
+          onMilestoneCelebrated={handleMilestoneCelebrated}
         />
+      )}
 
-        {/* Onboarding Overlay - Reminder for skipped users */}
-        <OnboardingOverlay
-          isSkipped={onboardingSkipped}
-          shouldShowReminder={showOnboardingReminder}
-          onResumeOnboarding={handleResumeOnboarding}
-          onDismissReminder={handleDismissReminder}
-        />
-      </PageWrapper>
+      {/* Onboarding Modal - Full-screen questionnaire */}
+      <OnboardingModal
+        open={isOnboardingModalOpen}
+        onOpenChange={setIsOnboardingModalOpen}
+        onComplete={handleOnboardingComplete}
+        onSkip={handleOnboardingSkip}
+        initialData={onboardingData}
+      />
+
+      {/* Onboarding Overlay - Reminder for skipped users */}
+      <OnboardingOverlay
+        isSkipped={onboardingSkipped}
+        shouldShowReminder={showOnboardingReminder}
+        onResumeOnboarding={handleResumeOnboarding}
+        onDismissReminder={handleDismissReminder}
+      />
+    </PageWrapper>
     </div>
   );
 }

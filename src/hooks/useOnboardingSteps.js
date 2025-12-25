@@ -5,14 +5,14 @@
  * These are post-modal onboarding tasks that guide users through first actions.
  *
  * Steps:
- * 1. Complete your profile (My Stats page)
+ * 1. Start your profile (My Stats page) - complete 3 qualifying actions
  * 2. Save your first program
  * 3. Log your first clinical entry
  * 4. Complete your first lesson
  * 5. Introduce yourself (forum post)
  *
  * Points per spec (/docs/skills/gamification-system.md):
- * - Complete profile: 20 pts
+ * - Start profile: 20 pts
  * - Save first program: 5 pts
  * - First clinical log: 2 pts
  * - First lesson: 3 pts
@@ -31,7 +31,7 @@ const MAX_DISMISSALS = 3; // After 3 dismissals, hide permanently
 const ONBOARDING_STEPS = [
   {
     id: 'profile',
-    title: 'Complete your profile',
+    title: 'Start your profile',
     description: 'Add your GPA, certifications, and experience',
     link: '/my-stats',
     points: 20,

@@ -97,8 +97,7 @@ async function enrichUserData(authUser) {
     };
   } catch (err) {
     console.error('[useAuth] Error enriching user data:', err);
-    // Return user with defaults on error - THIS ALLOWS SIGNUP TO SUCCEED
-    console.log('[useAuth] Returning basic user data without database enrichment');
+    // Return user with defaults on error
     return {
       ...authUser,
       role: 'user',
@@ -229,7 +228,6 @@ function useAuthInternal() {
     return { data, error: null };
   }, []);
 
-
   // Sign up with email/password
   const signUp = useCallback(async (email, password, metadata = {}) => {
     if (!isSupabaseConfigured()) {
@@ -245,7 +243,7 @@ function useAuthInternal() {
       email,
       password,
       options: {
-        data: metadata,
+        data: metadata, // full_name, etc.
       },
     });
 
@@ -256,41 +254,9 @@ function useAuthInternal() {
     }
 
     // Note: User may need to verify email depending on Supabase settings
-    // Manually create user profile and related records (workaround for trigger issue)
+    // Enrich user data with role and entitlements (if user is confirmed)
     if (data.user) {
-      try {
-        console.log('[useAuth] Creating user profile manually...');
-
-        // Create user_profiles record
-        const { error: profileError } = await supabase
-          .from('user_profiles')
-          .insert({
-            id: data.user.id,
-            email: data.user.email,
-            name: metadata.name || data.user.email,
-            created_at: new Date().toISOString()
-          });
-
-        if (profileError && profileError.code !== '23505') { // 23505 = duplicate key (already exists)
-          console.warn('[useAuth] Profile creation warning:', profileError.message);
-        }
-
-        // Create other required records (best effort - don't fail signup if these fail)
-        await Promise.allSettled([
-          supabase.from('user_guidance_state').insert({ user_id: data.user.id }),
-          supabase.from('user_academic_profiles').insert({ user_id: data.user.id }),
-          supabase.from('user_clinical_profiles').insert({ user_id: data.user.id }),
-          supabase.from('user_points').insert({ user_id: data.user.id, total_points: 0, current_level: 1 })
-        ]);
-
-        console.log('[useAuth] User profile created successfully');
-      } catch (profileCreationError) {
-        console.warn('[useAuth] Error creating profile records:', profileCreationError);
-        // Don't fail signup if profile creation fails
-      }
-
       const enrichedUser = await enrichUserData(data.user);
-
       setUser(enrichedUser);
       setSession(data.session ? { ...data.session, user: enrichedUser } : null);
       setIsLoading(false);
