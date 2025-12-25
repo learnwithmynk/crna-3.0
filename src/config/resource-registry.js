@@ -20,7 +20,7 @@ export const RESOURCE_REGISTRY = {
     // Applicant Core
     {
       slug: 'dashboard',
-      displayName: 'Dashboard',
+      displayName: 'Dashboard 123',
       route: '/dashboard',
       description: 'Main dashboard with overview of user progress and activity'
     },
